@@ -9,12 +9,13 @@
 		<version>2.2.4.RELEASE</version>
 		<relativePath /> <!-- lookup parent from repository -->
 	</parent>
-	<groupId>com.bezkoder</groupId>
-	<artifactId>spring-boot-security-jwt-mongodb</artifactId>
+	<groupId>ch.vindthing</groupId>
+	<artifactId>vindthing</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<name>spring-boot-security-jwt-mongodb</name>
-	<description>Demo project for Spring Boot Auth with Spring Security,
-		JWT, MongoDB</description>
+	<name>vindthing</name>
+	<description>
+		VindThing, finds your things!
+	</description>
 
 	<properties>
 		<java.version>1.8</java.version>
@@ -59,9 +60,9 @@
 			<scope>test</scope>
 		</dependency>
 		<dependency>
-			<groupId>javax.xml.bind</groupId>
-			<artifactId>jaxb-api</artifactId>
-			<version>2.1</version>
+			<groupId>jakarta.xml.bind</groupId>
+			<artifactId>jakarta.xml.bind-api</artifactId>
+			<version>2.3.2</version>
 		</dependency>
 	</dependencies>
 
