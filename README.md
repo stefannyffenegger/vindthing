@@ -1,5 +1,5 @@
 # VindThing
-Find your things!
+Finds your things!
 
 ## Run Spring Boot application
 ```
