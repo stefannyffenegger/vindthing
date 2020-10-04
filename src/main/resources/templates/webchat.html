@@ -7,7 +7,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <title>VindThing - Chat</title>
     <link rel="stylesheet" type="text/css" th:href="@{/webjars/bootstrap/4.5.2/css/bootstrap.css}"/>
-    <link rel="stylesheet" type="text/css" th:href="@{/webjars/font-awesome/5.14.0/css/font-awesome.min.css}"/>
+    <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.14.0/css/all.min.css"/>
     <link rel="stylesheet" type="text/css" th:href="@{/css/main.css}"/>
     <link rel="shortcut icon" type="image/x-icon" href="favicon.ico">
 </head>
@@ -21,7 +21,9 @@
         </button>
         <div class="collapse navbar-collapse" id="navbarSupportedContent">
             <ul class="navbar-nav ml-auto">
-                <li class="nav-item"><a class="nav-link" href="/sockjs-message">Chat</a></li>
+                <li class="nav-item"><a class="nav-link" href="/db-overview">Database</a></li>
+                <li class="nav-item"><a class="nav-link" href="/webchat">Chat</a></li>
+                <li class="nav-item"><a class="nav-link" href="/register">Register</a></li>
                 <li class="nav-item"><a class="nav-link" href="/login">Login</a></li>
             </ul>
         </div>
@@ -121,26 +123,20 @@
         $.post('/rest/user-connect',
             {username: userName},
             function (remoteAddr, status, xhr) {
-                console.log("post socket stuff");
                 var socket = new SockJS('/chat');
-                console.log("pre socket stuff");
                 stompClient = Stomp.over(socket);
-                console.log("yeah socket stuff");
 
                 stompClient.connect({username: userName}, function () {
                     stompClient.subscribe('/topic/broadcast', function (output) {
                         showMessage(createTextNode(JSON.parse(output.body)));
-                        console.log("broadcast")
                     });
 
                     stompClient.subscribe('/topic/active', function () {
                         updateUsers(userName);
-                        console.log("topic")
                     });
 
                     stompClient.subscribe('/user/queue/messages', function (output) {
                         showMessage(createTextNode(JSON.parse(output.body)));
-                        console.log("blabla")
                     });
 
                     sendConnection(' connected to server');
@@ -155,7 +151,6 @@
                 console.log('failed, ' + ex);
             }
         );
-        console.log("i waz here");
     }
 
     function disconnect() {

@@ -13,7 +13,6 @@ import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
 
 /**
  * Handles all messages
@@ -22,7 +21,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 @Controller
 //@RequestMapping("/ws")
 public class WebSocketChatController implements ActiveUserChangeListener {
-
     // private final static Logger LOGGER = LoggerFactory.getLogger(WebSocketChatController.class);
 
     @Autowired
@@ -41,18 +39,16 @@ public class WebSocketChatController implements ActiveUserChangeListener {
         activeUserManager.removeListener(this);
     }
 
-    @GetMapping("/sockjs-message")
-    public String getWebSocketWithSockJs() {return "sockjs-message";}
+    @GetMapping("/webchat")
+    public String getWebSocketWithSockJs() {return "webchat";}
 
     @MessageMapping("/chat")
     public void send(SimpMessageHeaderAccessor sha, @Payload ChatMessage chatMessage) throws Exception {
-        System.out.println("hi, im in chat hoho");
         String sender = sha.getUser().getName();
         ChatMessage message = new ChatMessage(chatMessage.getFrom(), chatMessage.getText(), chatMessage.getRecipient());
         if (!sender.equals(chatMessage.getRecipient())) {
             webSocket.convertAndSendToUser(sender, "/queue/messages", message);
         }
-
         webSocket.convertAndSendToUser(chatMessage.getRecipient(), "/queue/messages", message);
     }
 

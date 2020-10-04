@@ -15,31 +15,26 @@ public class AppController {
         return "index";
     }
 
-    @GetMapping("/test")
-    public String allAccess() {
-        return "test";
-    }
-
     @GetMapping("/login")
     public String login() {
         return "login";
     }
 
-    @GetMapping("/user")
+    @GetMapping("/db-overview")
     @PreAuthorize("hasRole('USER') or hasRole('MODERATOR') or hasRole('ADMIN')")
-    public String userAccess() {
-        return "User Content.";
+    public String dbOverview() {
+        return "db-overview";
     }
 
     @GetMapping("/mod")
     @PreAuthorize("hasRole('MODERATOR')")
     public String moderatorAccess() {
-        return "Moderator Board.";
+        return "Moderator.";
     }
 
-    @GetMapping("/admin")
+    @GetMapping("/register")
     @PreAuthorize("hasRole('ADMIN')")
     public String adminAccess() {
-        return "Admin Board.";
+        return "register";
     }
 }
