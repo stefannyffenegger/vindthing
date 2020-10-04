@@ -28,6 +28,14 @@
 			<artifactId>spring-boot-starter-data-mongodb</artifactId>
 		</dependency>
 
+
+		<!-- Debugging Helper - stellt wichtige Endpoints zu Verfügung -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-actuator</artifactId>
+		</dependency>
+
+
 		<!-- SECURITY -->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
