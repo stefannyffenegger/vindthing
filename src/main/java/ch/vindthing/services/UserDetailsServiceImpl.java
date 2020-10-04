@@ -1,4 +1,4 @@
-package ch.vindthing.security.services;
+package ch.vindthing.services;
 
 import ch.vindthing.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;

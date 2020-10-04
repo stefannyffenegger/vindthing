@@ -1,4 +1,4 @@
-package ch.vindthing.controllers;
+package ch.vindthing.controller;
 
 import java.util.HashSet;
 import java.util.List;
@@ -9,7 +9,7 @@ import javax.validation.Valid;
 import ch.vindthing.repository.RoleRepository;
 import ch.vindthing.repository.UserRepository;
 import ch.vindthing.security.jwt.JwtUtils;
-import ch.vindthing.security.services.UserDetailsImpl;
+import ch.vindthing.services.UserDetailsImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;

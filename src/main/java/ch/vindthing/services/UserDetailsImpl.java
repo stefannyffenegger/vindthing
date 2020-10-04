@@ -1,4 +1,4 @@
-package ch.vindthing.security.services;
+package ch.vindthing.services;
 
 import java.util.Collection;
 import java.util.List;

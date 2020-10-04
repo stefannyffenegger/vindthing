@@ -58,13 +58,11 @@
         </div>
     </div>
 </div>
-<script src="js/jquery-3.2.1.min.js"></script>
-<script src="js/popper.js"></script>
-<script src="js/bootstrap.min.js"></script>
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.5.0/sockjs.min.js" type="text/javascript"></script>
 <script src="js/stomp.min.js" type="text/javascript"></script>
+<script src="js/jquery-3.2.1.min.js" type="text/javascript"></script>
 <script type="text/javascript">
-    var url = "http://localhost:8080/";
     var stompClient = null;
     var selectedUser = null;
     var userName = $("#from").val();
@@ -88,21 +86,21 @@
             alert('Please input a nickname!');
             return;
         }
-        $.post('/rest/user-connect',
+        $.post('http://localhost:8080/ws/rest/user-connect',
             { username: userName },
             function(remoteAddr, status, xhr) {
-                var socket = new SockJS('/chat');
+                var socket = new SockJS('http://localhost:8080/ws/chat');
                 stompClient = Stomp.over(socket);
                 stompClient.connect({username: userName}, function () {
-                    stompClient.subscribe('/topic/broadcast', function (output) {
+                    stompClient.subscribe('http://localhost:8080/ws/topic/broadcast', function (output) {
                         showMessage(createTextNode(JSON.parse(output.body)));
                     });
 
-                    stompClient.subscribe('/topic/active', function () {
+                    stompClient.subscribe('http://localhost:8080/topic/active', function () {
                         updateUsers(userName);
                     });
 
-                    stompClient.subscribe('/user/queue/messages', function (output) {
+                    stompClient.subscribe('http://localhost:8080/ws/user/queue/messages', function (output) {
                         showMessage(createTextNode(JSON.parse(output.body)));
                     });
 
@@ -122,7 +120,7 @@
 
     function disconnect() {
         if (stompClient != null) {
-            $.post('/rest/user-disconnect',
+            $.post('http://localhost:8080/ws/rest/user-disconnect',
                 { username: userName },
                 function() {
                     sendConnection(' disconnected from server');
@@ -150,7 +148,7 @@
     }
 
     function sendBroadcast(json) {
-        stompClient.send("/app/broadcast", {}, JSON.stringify(json));
+        stompClient.send("http://localhost:8080/ws/app/broadcast", {}, JSON.stringify(json));
     }
 
     function send() {
@@ -159,7 +157,7 @@
             alert('Please select a user.');
             return;
         }
-        stompClient.send("/app/chat", {'sender': userName},
+        stompClient.send("http://localhost:8080/ws/app/chat", {'sender': userName},
             JSON.stringify({'from': userName, 'text': text, 'recipient': selectedUser}));
         $("#message").val("");
     }
@@ -220,7 +218,7 @@
         var index;
         activeUserUL.html('');
 
-        var url = '/rest/active-users-except/' + userName;
+        var url = 'http://localhost:8080/ws/rest/active-users-except/' + userName;
         $.ajax({
             type: 'GET',
             url: url,

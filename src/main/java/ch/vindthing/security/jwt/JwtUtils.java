@@ -2,7 +2,7 @@ package ch.vindthing.security.jwt;
 
 import java.util.Date;
 
-import ch.vindthing.security.services.UserDetailsImpl;
+import ch.vindthing.services.UserDetailsImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
