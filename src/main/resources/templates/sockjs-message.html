@@ -1,23 +1,46 @@
 <!DOCTYPE HTML>
 <html xmlns:th="http://www.thymeleaf.org">
+<html lang="en">
 <head>
-    <title>WebSocket With STOMP & SockJS Broadcast Example</title>
-    <th:block th:include="fragments/common.html :: headerfiles"></th:block>
+    <meta charset="utf-8">
+    <meta name="description" content="VindThing, finds your things!">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title>VindThing - Chat</title>
+    <link rel="stylesheet" type="text/css" th:href="@{/webjars/bootstrap/4.5.2/css/bootstrap.css}"/>
+    <link rel="stylesheet" type="text/css" th:href="@{/webjars/font-awesome/5.14.0/css/font-awesome.min.css}"/>
+    <link rel="stylesheet" type="text/css" th:href="@{/css/main.css}"/>
+    <link rel="shortcut icon" type="image/x-icon" href="favicon.ico">
 </head>
 <body>
+<header>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <a class="navbar-brand" href="/"><i class="fa fa-search" aria-hidden="true"></i> VindThing</a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent"
+                aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarSupportedContent">
+            <ul class="navbar-nav ml-auto">
+                <li class="nav-item"><a class="nav-link" href="/sockjs-message">Chat</a></li>
+                <li class="nav-item"><a class="nav-link" href="/login">Login</a></li>
+            </ul>
+        </div>
+    </nav>
+</header>
 <div class="container">
-    <div class="py-5 text-center">
-        <a href="/"><h2>WebSocket</h2></a>
-        <p class="lead">WebSocket Chat - with STOMP & SockJS.</p>
-    </div>
+    <h1 class="text-center mb-4">Chat</h1>
     <div class="row">
         <div class="col-md-6">
             <div class="mb-3">
                 <div class="input-group">
                     <input type="text" id="from" class="form-control" placeholder="Choose a nickname"/>
                     <div class="btn-group">
-                        <button type="button" id="connect" class="btn btn-sm btn-outline-secondary" onclick="connect()">Connect</button>
-                        <button type="button" id="disconnect" class="btn btn-sm btn-outline-secondary" onclick="disconnect()" disabled>Disconnect</button>
+                        <button type="button" id="connect" class="btn btn-sm btn-outline-secondary" onclick="connect()">
+                            Connect
+                        </button>
+                        <button type="button" id="disconnect" class="btn btn-sm btn-outline-secondary"
+                                onclick="disconnect()" disabled>Disconnect
+                        </button>
                     </div>
                 </div>
             </div>
@@ -60,13 +83,16 @@
         </div>
     </div>
 </div>
-
-<footer th:insert="fragments/common.html :: footer"></footer>
-
+<footer class="bg-primary mt-2 pt-2">
+    <div class="container-fluid hidden-sm-down">
+        <div class="row justify-content-md-center">
+        </div>
+    </div>
+</footer>
 <script th:src="@{/webjars/sockjs-client/1.1.2/sockjs.js}" type="text/javascript"></script>
 <script th:src="@{/webjars/stomp-websocket/2.3.3-1/stomp.js}" type="text/javascript"></script>
 <script th:src="@{/webjars/jquery/3.4.1/jquery.js}" type="text/javascript"></script>
-<script type="text/javascript">
+<script>
     var stompClient = null;
     var selectedUser = null;
     var userName = $("#from").val();
@@ -86,13 +112,15 @@
 
     function connect() {
         userName = $("#from").val();
+        //check if username is set
         if (userName == null || userName === "") {
             alert('Please input a nickname!');
             return;
         }
+        //connect user
         $.post('/rest/user-connect',
-            { username: userName },
-            function(remoteAddr, status, xhr) {
+            {username: userName},
+            function (remoteAddr, status, xhr) {
                 console.log("post socket stuff");
                 var socket = new SockJS('/chat');
                 console.log("pre socket stuff");
@@ -121,9 +149,9 @@
                     alert('error' + err);
                 });
 
-            }).done(function() {
+            }).done(function () {
             // alert('Request done!');
-        }).fail(function(jqxhr, settings, ex) {
+        }).fail(function (jqxhr, settings, ex) {
                 console.log('failed, ' + ex);
             }
         );
@@ -133,18 +161,18 @@
     function disconnect() {
         if (stompClient != null) {
             $.post('/rest/user-disconnect',
-                { username: userName },
-                function() {
+                {username: userName},
+                function () {
                     sendConnection(' disconnected from server');
 
-                    stompClient.disconnect(function() {
+                    stompClient.disconnect(function () {
                         console.log('disconnected...');
                         setConnected(false);
                     });
 
-                }).done(function() {
+                }).done(function () {
                 // alert('Request done!');
-            }).fail(function(jqxhr, settings, ex) {
+            }).fail(function (jqxhr, settings, ex) {
                     console.log('failed, ' + ex);
                 }
             );
@@ -177,11 +205,11 @@
     function createTextNode(messageObj) {
         var classAlert = 'alert-info';
         var fromTo = messageObj.from;
-        var addTo =  fromTo;
+        var addTo = fromTo;
 
         if (userName == messageObj.from) {
             fromTo = messageObj.recipient;
-            addTo =  'to: ' + fromTo;
+            addTo = 'to: ' + fromTo;
         }
 
         if (userName != messageObj.from && messageObj.from != "server") {
@@ -216,8 +244,7 @@
         $("#selectedUser").html(selectedUser);
         if ($("#selectedUser").html() == "") {
             $("#divSelectedUser").hide();
-        }
-        else {
+        } else {
             $("#divSelectedUser").show();
         }
     }
@@ -236,11 +263,10 @@
             url: url,
             // data: data,
             dataType: 'json', // ** ensure you add this line **
-            success: function(userList) {
+            success: function (userList) {
                 if (userList.length == 0) {
                     activeUserSpan.html('<p><i>No active users found.</i></p>');
-                }
-                else {
+                } else {
                     activeUserSpan.html('<p class="text-muted">click on user to begin chat</p>');
 
                     for (index = 0; index < userList.length; ++index) {
@@ -255,7 +281,7 @@
                     */
                 }
             },
-            error: function(XMLHttpRequest, textStatus, errorThrown) {
+            error: function (XMLHttpRequest, textStatus, errorThrown) {
                 alert("error occurred");
             }
         });

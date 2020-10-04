@@ -8,28 +8,38 @@ import org.springframework.stereotype.Controller;
 
 @CrossOrigin(origins = "*", maxAge = 3600)
 @Controller
-@RequestMapping("/api/app")
+@RequestMapping("/")
 public class AppController {
-	@GetMapping("/test")
-	public String allAccess() {
-		return "test";
-	}
-	
-	@GetMapping("/user")
-	@PreAuthorize("hasRole('USER') or hasRole('MODERATOR') or hasRole('ADMIN')")
-	public String userAccess() {
-		return "User Content.";
-	}
+    @GetMapping("/")
+    public String index() {
+        return "index";
+    }
 
-	@GetMapping("/mod")
-	@PreAuthorize("hasRole('MODERATOR')")
-	public String moderatorAccess() {
-		return "Moderator Board.";
-	}
+    @GetMapping("/test")
+    public String allAccess() {
+        return "test";
+    }
 
-	@GetMapping("/admin")
-	@PreAuthorize("hasRole('ADMIN')")
-	public String adminAccess() {
-		return "Admin Board.";
-	}
+    @GetMapping("/login")
+    public String login() {
+        return "login";
+    }
+
+    @GetMapping("/user")
+    @PreAuthorize("hasRole('USER') or hasRole('MODERATOR') or hasRole('ADMIN')")
+    public String userAccess() {
+        return "User Content.";
+    }
+
+    @GetMapping("/mod")
+    @PreAuthorize("hasRole('MODERATOR')")
+    public String moderatorAccess() {
+        return "Moderator Board.";
+    }
+
+    @GetMapping("/admin")
+    @PreAuthorize("hasRole('ADMIN')")
+    public String adminAccess() {
+        return "Admin Board.";
+    }
 }

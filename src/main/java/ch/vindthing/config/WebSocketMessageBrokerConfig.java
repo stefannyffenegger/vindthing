@@ -23,7 +23,7 @@ public class WebSocketMessageBrokerConfig implements WebSocketMessageBrokerConfi
     public void registerStompEndpoints(StompEndpointRegistry registry) {
         registry.addEndpoint("/broadcast");
         registry.addEndpoint("/broadcast").withSockJS().setHeartbeatTime(60_000); //60sec heartbeat interval
-        registry.addEndpoint("/chat");
+        registry.addEndpoint("/chat").withSockJS();//.setAllowedOrigins("*").withSockJS();
     }
 
     @Override
