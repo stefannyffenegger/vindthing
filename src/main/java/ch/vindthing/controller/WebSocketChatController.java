@@ -20,7 +20,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
  */
 @CrossOrigin(origins = "*", maxAge = 3600)
 @Controller
-@RequestMapping("/ws")
+//@RequestMapping("/ws")
 public class WebSocketChatController implements ActiveUserChangeListener {
 
     // private final static Logger LOGGER = LoggerFactory.getLogger(WebSocketChatController.class);
@@ -42,12 +42,11 @@ public class WebSocketChatController implements ActiveUserChangeListener {
     }
 
     @GetMapping("/sockjs-message")
-    public String getWebSocketWithSockJs() {
-        return "sockjs-message";
-    }
+    public String getWebSocketWithSockJs() {return "sockjs-message";}
 
     @MessageMapping("/chat")
     public void send(SimpMessageHeaderAccessor sha, @Payload ChatMessage chatMessage) throws Exception {
+        System.out.println("hi, im in chat hoho");
         String sender = sha.getUser().getName();
         ChatMessage message = new ChatMessage(chatMessage.getFrom(), chatMessage.getText(), chatMessage.getRecipient());
         if (!sender.equals(chatMessage.getRecipient())) {

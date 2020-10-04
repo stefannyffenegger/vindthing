@@ -1,19 +1,12 @@
 package ch.vindthing.config;
 
 import ch.vindthing.util.UserInterceptor;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.messaging.converter.DefaultContentTypeResolver;
-import org.springframework.messaging.converter.MappingJackson2MessageConverter;
-import org.springframework.messaging.converter.MessageConverter;
 import org.springframework.messaging.simp.config.ChannelRegistration;
 import org.springframework.messaging.simp.config.MessageBrokerRegistry;
-import org.springframework.util.MimeTypeUtils;
 import org.springframework.web.socket.config.annotation.EnableWebSocketMessageBroker;
 import org.springframework.web.socket.config.annotation.StompEndpointRegistry;
 import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerConfigurer;
-
-import java.util.List;
 
 @Configuration
 @EnableWebSocketMessageBroker
@@ -21,16 +14,16 @@ public class WebSocketMessageBrokerConfig implements WebSocketMessageBrokerConfi
 
     @Override
     public void configureMessageBroker(MessageBrokerRegistry config) {
-        config.enableSimpleBroker( "/ws/topic", "/ws/queue"); //Subscriber endpoint
-        config.setApplicationDestinationPrefixes("/ws/app");
-        config.setUserDestinationPrefix("/ws/user"); //User destination
+        config.enableSimpleBroker("/topic", "/queue"); //Subscriber endpoint
+        config.setApplicationDestinationPrefixes("/app");
+        config.setUserDestinationPrefix("/user"); //User destination
     }
 
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
-        registry.addEndpoint("/ws/broadcast");
-        registry.addEndpoint("/ws/broadcast").withSockJS().setHeartbeatTime(60_000); //60sec heartbeat interval
-        registry.addEndpoint("/ws/chat");
+        registry.addEndpoint("/broadcast");
+        registry.addEndpoint("/broadcast").withSockJS().setHeartbeatTime(60_000); //60sec heartbeat interval
+        registry.addEndpoint("/chat");
     }
 
     @Override
