@@ -6,22 +6,23 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import javax.validation.Valid;
 
+import ch.vindthing.payload.response.UserResponse;
 import ch.vindthing.repository.RoleRepository;
 import ch.vindthing.repository.UserRepository;
+import ch.vindthing.security.jwt.AuthTokenFilter;
 import ch.vindthing.security.jwt.JwtUtils;
 import ch.vindthing.services.UserDetailsImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.util.StringUtils;
+import org.springframework.web.bind.annotation.*;
 import ch.vindthing.models.ERole;
 import ch.vindthing.models.Role;
 import ch.vindthing.models.User;
@@ -72,11 +73,7 @@ public class AuthController {
                 .map(item -> item.getAuthority())
                 .collect(Collectors.toList());
 
-        return ResponseEntity.ok(new JwtResponse(jwt,
-                userDetails.getId(),
-                userDetails.getUsername(),
-                userDetails.getEmail(),
-                roles));
+        return ResponseEntity.ok(new JwtResponse(jwt));
     }
 
     /**
@@ -138,5 +135,30 @@ public class AuthController {
         userRepository.save(user);
 
         return ResponseEntity.ok(new MessageResponse("User registered successfully!"));
+    }
+
+    /**
+     * Get user profile information from JWT
+     *
+     * @return Response
+     */
+    @RequestMapping("/profile/get")
+    @PreAuthorize("hasRole('USER') or hasRole('MODERATOR') or hasRole('ADMIN')")
+    public ResponseEntity<?> getUserProfile(@Valid @RequestHeader (name="Authorization") String token) {
+        if (StringUtils.hasText(token) && token.startsWith("Bearer ")) {
+            token = token.substring(7);
+        }else{
+            return ResponseEntity.badRequest().body("couldn't find profile");
+        }
+        String username = jwtUtils.getUserNameFromJwtToken(token);
+
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new UsernameNotFoundException("User Not Found with username: " + username));
+
+        List<String> roles = user.getRoles().stream()
+                .map(item -> item.getName().toString())
+                .collect(Collectors.toList());
+
+        return ResponseEntity.ok(new UserResponse(user.getUsername(), user.getEmail(), roles));
     }
 }

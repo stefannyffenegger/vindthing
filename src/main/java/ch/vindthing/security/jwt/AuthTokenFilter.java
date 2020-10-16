@@ -19,7 +19,7 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 /**
- *
+ * Do on every request
  */
 public class AuthTokenFilter extends OncePerRequestFilter {
   @Autowired
@@ -63,8 +63,13 @@ public class AuthTokenFilter extends OncePerRequestFilter {
     filterChain.doFilter(request, response);
   }
 
+  /**
+   * Remove Bearer prefix
+   * @param request Full HTTP Request
+   * @return Plain JWT
+   */
   private String parseJwt(HttpServletRequest request) {
-    String headerAuth = request.getHeader("Authorization");
+    String headerAuth = request.getHeader("Authorization"); //Get the Authorization property
 
     if (StringUtils.hasText(headerAuth) && headerAuth.startsWith("Bearer ")) {
       return headerAuth.substring(7, headerAuth.length());
