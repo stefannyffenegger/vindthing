@@ -15,11 +15,6 @@ public class AppController {
         return "index";
     }
 
-    @GetMapping("/login")
-    public String login() {
-        return "login";
-    }
-
     @GetMapping("/db-overview")
     @PreAuthorize("hasRole('USER') or hasRole('MODERATOR') or hasRole('ADMIN')")
     public String dbOverview() {
@@ -30,11 +25,5 @@ public class AppController {
     @PreAuthorize("hasRole('MODERATOR')")
     public String moderatorAccess() {
         return "Moderator.";
-    }
-
-    @GetMapping("/register")
-    @PreAuthorize("hasRole('ADMIN')")
-    public String adminAccess() {
-        return "register";
     }
 }
