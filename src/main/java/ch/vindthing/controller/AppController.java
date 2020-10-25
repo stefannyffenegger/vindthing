@@ -1,9 +1,12 @@
 package ch.vindthing.controller;
 
 import ch.vindthing.model.Item;
+import ch.vindthing.model.Store;
 import ch.vindthing.payload.request.ItemRequest;
+import ch.vindthing.payload.request.StoreRequest;
 import ch.vindthing.payload.response.MessageResponse;
 import ch.vindthing.repository.ItemRepository;
+import ch.vindthing.repository.StoreRepository;
 import ch.vindthing.repository.UserRepository;
 import ch.vindthing.security.jwt.JwtUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,6 +29,9 @@ public class AppController {
     ItemRepository itemRepository;
 
     @Autowired
+    StoreRepository storeRepository;
+
+    @Autowired
     UserRepository userRepository;
 
     @Autowired
@@ -37,31 +43,39 @@ public class AppController {
         return "db-overview";
     }
 
-    @RequestMapping("/items/add")
+    @RequestMapping("/item/add")
     @PreAuthorize("hasRole('USER') or hasRole('MODERATOR') or hasRole('ADMIN')")
     public ResponseEntity<?> addItem(@Valid @RequestBody() ItemRequest itemRequest) {
-        System.out.println("Item Request ADD: " + itemRequest.getName() + itemRequest.getDescription());
-
         Item item = new Item(itemRequest.getName(), itemRequest.getDescription(), itemRequest.getQuantity());
         itemRepository.save(item);
 
         return ResponseEntity.ok(new MessageResponse("Item added!"));
     }
 
-    @RequestMapping("/items/get-by-name")
+    @RequestMapping("/item/get-by-name")
     @PreAuthorize("hasRole('USER') or hasRole('MODERATOR') or hasRole('ADMIN')")
     public ResponseEntity<?> getItemByName(@Valid @RequestBody() ItemRequest itemRequest) {
-        /*if (StringUtils.hasText(token) && token.startsWith("Bearer ")) {
-            token = token.substring(7);
-        }else{
-            return ResponseEntity.badRequest().body("couldn't find profile");
-        }
-        String email = jwtUtils.getEmailFromJwtToken(token);*/
-        System.out.println("Item Request find by name: " + itemRequest.getName() + itemRequest.getDescription());
-
         Item item = itemRepository.findByName(itemRequest.getName())
                 .orElseThrow(() -> new UsernameNotFoundException("Item Not Found with name: " + itemRequest.getName()));
 
         return ResponseEntity.ok(new ItemRequest(item.getName(), item.getDescription(), item.getQuantity()));
+    }
+
+    @RequestMapping("/store/add")
+    @PreAuthorize("hasRole('USER') or hasRole('MODERATOR') or hasRole('ADMIN')")
+    public ResponseEntity<?> addStore(@Valid @RequestBody() StoreRequest storeRequest) {
+        Store store = new Store(storeRequest.getName(), storeRequest.getDescription(), storeRequest.getLocation());
+        storeRepository.save(store);
+
+        return ResponseEntity.ok(new MessageResponse("Store added!"));
+    }
+
+    @RequestMapping("/store/get-by-name")
+    @PreAuthorize("hasRole('USER') or hasRole('MODERATOR') or hasRole('ADMIN')")
+    public ResponseEntity<?> getItemByName(@Valid @RequestBody() StoreRequest storeRequest) {
+        Store store = storeRepository.findByName(storeRequest.getName())
+                .orElseThrow(() -> new UsernameNotFoundException("Store Not Found with name: " + storeRequest.getName()));
+
+        return ResponseEntity.ok(new StoreRequest(store.getName(), store.getDescription(), store.getLocation()));
     }
 }
