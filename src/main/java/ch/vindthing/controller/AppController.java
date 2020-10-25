@@ -52,6 +52,7 @@ public class AppController {
     @PreAuthorize("hasRole('USER') or hasRole('MODERATOR') or hasRole('ADMIN')")
     @Deprecated
     public ResponseEntity<?> addItem(@Valid @RequestBody() ItemRequest itemRequest) {
+        // Use /store/add-item instead
         Item item = new Item(itemRequest.getName(), itemRequest.getDescription(), itemRequest.getQuantity());
         itemRepository.save(item);
         return ResponseEntity.ok(new MessageResponse("Item added!"));
@@ -60,10 +61,10 @@ public class AppController {
     @RequestMapping("/item/get-by-name")
     @PreAuthorize("hasRole('USER') or hasRole('MODERATOR') or hasRole('ADMIN')")
     public ResponseEntity<?> getItemByName(@Valid @RequestBody() ItemRequest itemRequest) {
-        // TODO: only items of user or store
+        // TODO: only items of user or store; better returns
         Item item = itemRepository.findByName(itemRequest.getName())
                 .orElseThrow(() -> new UsernameNotFoundException("Item Not Found: " + itemRequest.getName()));
-        return ResponseEntity.ok(new ItemRequest(item.getName(), item.getDescription(), item.getQuantity(), "Shelf1"));
+        return ResponseEntity.ok(new ItemRequest(item.getName(), item.getDescription(), item.getQuantity()));
     }
 
     @RequestMapping("/store/add")
@@ -103,10 +104,18 @@ public class AppController {
 
     @RequestMapping("/store/get-by-name")
     @PreAuthorize("hasRole('USER') or hasRole('MODERATOR') or hasRole('ADMIN')")
-    public ResponseEntity<?> getItemByName(@Valid @RequestBody() StoreRequest storeRequest) {
+    public ResponseEntity<?> getStoreByName(@Valid @RequestBody() StoreRequest storeRequest) {
         // TODO: only stores of user
         Store store = storeRepository.findByName(storeRequest.getName())
                 .orElseThrow(() -> new UsernameNotFoundException("Store Not Found: " + storeRequest.getName()));
         return ResponseEntity.ok(new StoreRequest(store.getName(), store.getDescription(), store.getLocation()));
+    }
+
+    @GetMapping("/store/get-all")
+    @PreAuthorize("hasRole('USER') or hasRole('MODERATOR') or hasRole('ADMIN')")
+    public ResponseEntity<?> getAllStores() {
+        // TODO: only stores of user
+        List<Store> store = storeRepository.findAll();
+        return ResponseEntity.ok(store);
     }
 }

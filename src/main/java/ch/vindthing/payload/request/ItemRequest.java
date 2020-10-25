@@ -7,14 +7,12 @@ public class ItemRequest {
     private String name;
     private String description;
     private int quantity;
-    @NotBlank
     private String store; // Store to which item belongs to
 
-    public ItemRequest(String name, String description, int quantity, String store) {
+    public ItemRequest(String name, String description, int quantity) {
         this.name = name;
         this.description = description;
         this.quantity = quantity;
-        this.store = store;
     }
 
     public String getDescription() {
