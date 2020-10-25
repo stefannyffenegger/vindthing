@@ -1,4 +1,4 @@
-package ch.vindthing.models;
+package ch.vindthing.model;
 
 import java.util.HashSet;
 import java.util.Set;

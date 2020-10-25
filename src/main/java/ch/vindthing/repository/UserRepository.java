@@ -4,7 +4,7 @@ import java.util.Optional;
 
 import org.springframework.data.mongodb.repository.MongoRepository;
 
-import ch.vindthing.models.User;
+import ch.vindthing.model.User;
 
 public interface UserRepository extends MongoRepository<User, String> {
   Optional<User> findByName(String name);

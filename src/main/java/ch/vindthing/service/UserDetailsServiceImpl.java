@@ -1,4 +1,4 @@
-package ch.vindthing.services;
+package ch.vindthing.service;
 
 import ch.vindthing.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -8,7 +8,7 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import ch.vindthing.models.User;
+import ch.vindthing.model.User;
 
 @Service
 public class UserDetailsServiceImpl implements UserDetailsService {

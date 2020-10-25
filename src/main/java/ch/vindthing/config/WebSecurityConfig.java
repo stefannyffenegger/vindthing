@@ -2,7 +2,7 @@ package ch.vindthing.config;
 
 import ch.vindthing.security.jwt.AuthEntryPointJwt;
 import ch.vindthing.security.jwt.AuthTokenFilter;
-import ch.vindthing.services.UserDetailsServiceImpl;
+import ch.vindthing.service.UserDetailsServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

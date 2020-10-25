@@ -1,4 +1,4 @@
-package ch.vindthing.models;
+package ch.vindthing.model;
 
 public enum ERole {
   ROLE_USER,
