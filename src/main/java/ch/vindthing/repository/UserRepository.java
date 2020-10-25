@@ -7,9 +7,11 @@ import org.springframework.data.mongodb.repository.MongoRepository;
 import ch.vindthing.models.User;
 
 public interface UserRepository extends MongoRepository<User, String> {
-  Optional<User> findByUsername(String username);
+  Optional<User> findByName(String name);
 
-  Boolean existsByUsername(String username);
+  Optional<User> findByEmail(String email);
+
+  Boolean existsByName(String name);
 
   Boolean existsByEmail(String email);
 }

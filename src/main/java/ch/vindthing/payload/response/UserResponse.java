@@ -3,12 +3,12 @@ package ch.vindthing.payload.response;
 import java.util.List;
 
 public class UserResponse {
-    private String username;
+    private String name;
     private String email;
     private List<String> roles;
 
-    public UserResponse(String username, String email, List<String> roles) {
-        this.username = username;
+    public UserResponse(String name, String email, List<String> roles) {
+        this.name = name;
         this.email = email;
         this.roles = roles;
     }
@@ -21,12 +21,12 @@ public class UserResponse {
         this.email = email;
     }
 
-    public String getUsername() {
-        return username;
+    public String getName() {
+        return name;
     }
 
-    public void setUsername(String username) {
-        this.username = username;
+    public void setName(String name) {
+        this.name = name;
     }
 
     public List<String> getRoles() {

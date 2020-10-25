@@ -9,7 +9,6 @@ import javax.validation.Valid;
 import ch.vindthing.payload.response.UserResponse;
 import ch.vindthing.repository.RoleRepository;
 import ch.vindthing.repository.UserRepository;
-import ch.vindthing.security.jwt.AuthTokenFilter;
 import ch.vindthing.security.jwt.JwtUtils;
 import ch.vindthing.services.UserDetailsImpl;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -63,7 +62,7 @@ public class AuthController {
     public ResponseEntity<?> authenticateUser(@Valid @RequestBody LoginRequest loginRequest) {
 
         Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(loginRequest.getUsername(), loginRequest.getPassword()));
+                new UsernamePasswordAuthenticationToken(loginRequest.getEmail(), loginRequest.getPassword()));
 
         SecurityContextHolder.getContext().setAuthentication(authentication);
         String jwt = jwtUtils.generateJwtToken(authentication);
@@ -84,11 +83,11 @@ public class AuthController {
      */
     @PostMapping("/signup")
     public ResponseEntity<?> registerUser(@Valid @RequestBody SignupRequest signUpRequest) {
-        if (userRepository.existsByUsername(signUpRequest.getUsername())) {
+        /*if (userRepository.existsByUsername(signUpRequest.getEmail())) {
             return ResponseEntity
                     .badRequest()
                     .body(new MessageResponse("Error: Username is already taken!"));
-        }
+        }*/
 
         if (userRepository.existsByEmail(signUpRequest.getEmail())) {
             return ResponseEntity
@@ -97,7 +96,7 @@ public class AuthController {
         }
 
         // Create new user account
-        User user = new User(signUpRequest.getUsername(),
+        User user = new User(signUpRequest.getName(),
                 signUpRequest.getEmail(),
                 encoder.encode(signUpRequest.getPassword()));
 
@@ -151,15 +150,15 @@ public class AuthController {
         }else{
             return ResponseEntity.badRequest().body("couldn't find profile");
         }
-        String username = jwtUtils.getUserNameFromJwtToken(token);
+        String email = jwtUtils.getEmailFromJwtToken(token);
 
-        User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new UsernameNotFoundException("User Not Found with username: " + username));
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new UsernameNotFoundException("User Not Found with username: " + email));
 
         List<String> roles = user.getRoles().stream()
                 .map(item -> item.getName().toString())
                 .collect(Collectors.toList());
 
-        return ResponseEntity.ok(new UserResponse(user.getUsername(), user.getEmail(), roles));
+        return ResponseEntity.ok(new UserResponse(user.getName(), user.getEmail(), roles));
     }
 }
