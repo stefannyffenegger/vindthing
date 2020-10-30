@@ -64,7 +64,16 @@ public class AppController {
         // TODO: only items of user or store; better returns
         Item item = itemRepository.findByName(itemRequest.getName())
                 .orElseThrow(() -> new UsernameNotFoundException("Item Not Found: " + itemRequest.getName()));
-        return ResponseEntity.ok(new ItemRequest(item.getName(), item.getDescription(), item.getQuantity()));
+        return ResponseEntity.ok(new ItemRequest(item.getId(), item.getName(), item.getDescription(), item.getQuantity()));
+    }
+
+    @RequestMapping("/item/get-by-id")
+    @PreAuthorize("hasRole('USER') or hasRole('MODERATOR') or hasRole('ADMIN')")
+    public ResponseEntity<?> getItemById(@Valid @RequestBody() ItemRequest itemRequest) {
+        // TODO: only items of user or store; better returns
+        Item item = itemRepository.findByName(itemRequest.getName())
+                .orElseThrow(() -> new UsernameNotFoundException("Item Not Found: " + itemRequest.getName()));
+        return ResponseEntity.ok(new ItemRequest(item.getId(), item.getName(), item.getDescription(), item.getQuantity()));
     }
 
     @RequestMapping("/store/add")
@@ -89,13 +98,13 @@ public class AppController {
         items.add(item);
         store.setItems(items);
         storeRepository.save(store);
-        return ResponseEntity.ok(new MessageResponse("Item added to Store!"));
+        return ResponseEntity.ok(new ItemRequest(item.getId(), item.getName(), item.getDescription(), item.getQuantity()));
     }
 
     @RequestMapping("/store/delete")
     @PreAuthorize("hasRole('USER') or hasRole('MODERATOR') or hasRole('ADMIN')")
     public ResponseEntity<?> deleteStore(@Valid @RequestBody() StoreRequest storeRequest) {
-        // TODO: only stores of user
+        // TODO: only stores of user, change to del by id, only if empty
         Store store = storeRepository.findByName(storeRequest.getName())
                 .orElseThrow(() -> new UsernameNotFoundException("Store Not Found: " + storeRequest.getName()));
         storeRepository.delete(store);
