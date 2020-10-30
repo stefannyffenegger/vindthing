@@ -14,7 +14,6 @@ public class Item {
   @Id
   private String id;
 
-  @NotBlank
   @Size(max = 20)
   private String name;
 
@@ -23,8 +22,7 @@ public class Item {
 
   private int quantity;
 
-  @DBRef
-  private Set<User> users = new HashSet<>();
+  private String imageUrl;
 
   public Item() {
   }
@@ -69,11 +67,11 @@ public class Item {
 
   public void setQuantity(int quantity) { this.quantity = quantity; }
 
-  public Set<User> getUsers() {
-    return users;
+  public String getImageUrl() {
+    return imageUrl;
   }
 
-  public void setUsers(Set<User> user) {
-    this.users = users;
+  public void setImageUrl(String imageUrl) {
+    this.imageUrl = imageUrl;
   }
 }

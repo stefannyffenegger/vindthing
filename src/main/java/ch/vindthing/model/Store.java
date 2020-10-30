@@ -88,6 +88,6 @@ public class Store {
   }
 
   public void setUsers(Set<User> user) {
-    this.users = users;
+    this.users = user;
   }
 }

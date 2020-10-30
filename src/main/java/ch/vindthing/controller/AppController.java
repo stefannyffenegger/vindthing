@@ -28,7 +28,7 @@ import java.util.stream.Collectors;
 
 @CrossOrigin(origins = "*", maxAge = 3600)
 @Controller
-@RequestMapping("/")
+@RequestMapping("/api/")
 public class AppController {
     @Autowired
     ItemRepository itemRepository;
@@ -42,50 +42,7 @@ public class AppController {
     @Autowired
     JwtUtils jwtUtils;
 
-    @GetMapping("/db-overview")
-    @PreAuthorize("hasRole('USER') or hasRole('MODERATOR') or hasRole('ADMIN')")
-    public String dbOverview() {
-        return "db-overview";
-    }
-
     @RequestMapping("/item/add")
-    @PreAuthorize("hasRole('USER') or hasRole('MODERATOR') or hasRole('ADMIN')")
-    @Deprecated
-    public ResponseEntity<?> addItem(@Valid @RequestBody() ItemRequest itemRequest) {
-        // Use /store/add-item instead
-        Item item = new Item(itemRequest.getName(), itemRequest.getDescription(), itemRequest.getQuantity());
-        itemRepository.save(item);
-        return ResponseEntity.ok(new MessageResponse("Item added!"));
-    }
-
-    @RequestMapping("/item/get-by-name")
-    @PreAuthorize("hasRole('USER') or hasRole('MODERATOR') or hasRole('ADMIN')")
-    public ResponseEntity<?> getItemByName(@Valid @RequestBody() ItemRequest itemRequest) {
-        // TODO: only items of user or store; better returns
-        Item item = itemRepository.findByName(itemRequest.getName())
-                .orElseThrow(() -> new UsernameNotFoundException("Item Not Found: " + itemRequest.getName()));
-        return ResponseEntity.ok(new ItemRequest(item.getId(), item.getName(), item.getDescription(), item.getQuantity()));
-    }
-
-    @RequestMapping("/item/get-by-id")
-    @PreAuthorize("hasRole('USER') or hasRole('MODERATOR') or hasRole('ADMIN')")
-    public ResponseEntity<?> getItemById(@Valid @RequestBody() ItemRequest itemRequest) {
-        // TODO: only items of user or store; better returns
-        Item item = itemRepository.findByName(itemRequest.getName())
-                .orElseThrow(() -> new UsernameNotFoundException("Item Not Found: " + itemRequest.getName()));
-        return ResponseEntity.ok(new ItemRequest(item.getId(), item.getName(), item.getDescription(), item.getQuantity()));
-    }
-
-    @RequestMapping("/store/add")
-    @PreAuthorize("hasRole('USER') or hasRole('MODERATOR') or hasRole('ADMIN')")
-    public ResponseEntity<?> addStore(@Valid @RequestBody() StoreRequest storeRequest) {
-        // TODO: Add User to store as notblank
-        Store store = new Store(storeRequest.getName(), storeRequest.getDescription(), storeRequest.getLocation());
-        storeRepository.save(store);
-        return ResponseEntity.ok(new MessageResponse("Store added!"));
-    }
-
-    @RequestMapping("/store/add-item")
     @PreAuthorize("hasRole('USER') or hasRole('MODERATOR') or hasRole('ADMIN')")
     public ResponseEntity<?> addItemToStore(@Valid @RequestBody() ItemRequest itemRequest) {
         Item item = new Item(itemRequest.getName(), itemRequest.getDescription(), itemRequest.getQuantity());
@@ -98,26 +55,34 @@ public class AppController {
         items.add(item);
         store.setItems(items);
         storeRepository.save(store);
-        return ResponseEntity.ok(new ItemRequest(item.getId(), item.getName(), item.getDescription(), item.getQuantity()));
+        return ResponseEntity.ok(new ItemRequest(
+                item.getId(), item.getName(), item.getDescription(), item.getQuantity()));
+    }
+
+    @RequestMapping("/store/add")
+    @PreAuthorize("hasRole('USER') or hasRole('MODERATOR') or hasRole('ADMIN')")
+    public ResponseEntity<?> addStore(@Valid @RequestBody() StoreRequest storeRequest) {
+        // TODO: Add User to store as notblank
+        Store store = new Store(storeRequest.getName(), storeRequest.getDescription(), storeRequest.getLocation());
+        storeRepository.save(store);
+        return ResponseEntity.ok(new MessageResponse("Store added!"));
     }
 
     @RequestMapping("/store/delete")
     @PreAuthorize("hasRole('USER') or hasRole('MODERATOR') or hasRole('ADMIN')")
     public ResponseEntity<?> deleteStore(@Valid @RequestBody() StoreRequest storeRequest) {
-        // TODO: only stores of user, change to del by id, only if empty
-        Store store = storeRepository.findByName(storeRequest.getName())
-                .orElseThrow(() -> new UsernameNotFoundException("Store Not Found: " + storeRequest.getName()));
-        storeRepository.delete(store);
-        return ResponseEntity.ok(new MessageResponse("Store deleted!"));
-    }
+        // TODO: only stores of user, delete all items in store first
 
-    @RequestMapping("/store/get-by-name")
-    @PreAuthorize("hasRole('USER') or hasRole('MODERATOR') or hasRole('ADMIN')")
-    public ResponseEntity<?> getStoreByName(@Valid @RequestBody() StoreRequest storeRequest) {
-        // TODO: only stores of user
-        Store store = storeRepository.findByName(storeRequest.getName())
-                .orElseThrow(() -> new UsernameNotFoundException("Store Not Found: " + storeRequest.getName()));
-        return ResponseEntity.ok(new StoreRequest(store.getName(), store.getDescription(), store.getLocation()));
+        if(storeRequest.getId()!=null && !storeRequest.getId().equals("")){
+            Store store = storeRepository.findById(storeRequest.getId())
+                    .orElseThrow(() -> new UsernameNotFoundException("Store ID Not Found: " + storeRequest.getId()));
+            storeRepository.delete(store);
+        }else if(storeRequest.getName()!=null && !storeRequest.getName().equals("")){
+            Store store = storeRepository.findByName(storeRequest.getName())
+                    .orElseThrow(() -> new UsernameNotFoundException("Store Name Not Found: " + storeRequest.getName()));
+            storeRepository.delete(store);
+        }
+        return ResponseEntity.ok(new MessageResponse("Store deleted!"));
     }
 
     @GetMapping("/store/get-all")
@@ -126,5 +91,27 @@ public class AppController {
         // TODO: only stores of user
         List<Store> store = storeRepository.findAll();
         return ResponseEntity.ok(store);
+    }
+
+    @RequestMapping("/store/get-by-name")
+    @PreAuthorize("hasRole('USER') or hasRole('MODERATOR') or hasRole('ADMIN')")
+    @Deprecated
+    public ResponseEntity<?> getStoreByName(@Valid @RequestBody() StoreRequest storeRequest) {
+        // TODO: only stores of user
+        Store store = storeRepository.findByName(storeRequest.getName())
+                .orElseThrow(() -> new UsernameNotFoundException("Store Not Found: " + storeRequest.getName()));
+        return ResponseEntity.ok(new StoreRequest(
+                store.getId(), store.getName(), store.getDescription(), store.getLocation()));
+    }
+
+    @RequestMapping("/store/get-by-id")
+    @PreAuthorize("hasRole('USER') or hasRole('MODERATOR') or hasRole('ADMIN')")
+    @Deprecated
+    public ResponseEntity<?> getStoreById(@Valid @RequestBody() StoreRequest storeRequest) {
+        // TODO: only stores of user
+        Store store = storeRepository.findById(storeRequest.getId())
+                .orElseThrow(() -> new UsernameNotFoundException("Store Not Found: " + storeRequest.getId()));
+        return ResponseEntity.ok(new StoreRequest(
+                store.getId(), store.getName(), store.getDescription(), store.getLocation()));
     }
 }

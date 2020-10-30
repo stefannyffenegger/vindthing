@@ -4,17 +4,22 @@ import javax.validation.constraints.NotBlank;
 import java.util.Set;
 
 public class StoreRequest {
-    @NotBlank
+    private String id;
     private String name;
     private String description;
     private String location;
     private Set<String> items;
 
-    public StoreRequest(String name, String description, String location) {
+    public StoreRequest(String id, String name, String description, String location) {
+        this.id = id;
         this.name = name;
         this.description = description;
         this.location = location;
     }
+
+    public String getId() { return id; }
+
+    public void setId(String id) {this.id = id; }
 
     public String getDescription() {
         return description;

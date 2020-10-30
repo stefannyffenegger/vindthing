@@ -8,5 +8,7 @@ import java.util.Optional;
 public interface ItemRepository extends MongoRepository<Item, String> {
   Optional<Item> findByName(String name);
 
+  Optional<Item> findById(String id);
+
   Boolean existsByName(String name);
 }

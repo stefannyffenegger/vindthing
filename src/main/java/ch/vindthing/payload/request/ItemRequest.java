@@ -4,7 +4,6 @@ import javax.validation.constraints.*;
 
 public class ItemRequest {
     private String id;
-    @NotBlank
     private String name;
     private String description;
     private int quantity;
@@ -16,6 +15,7 @@ public class ItemRequest {
         this.description = description;
         this.quantity = quantity;
     }
+
     public String getId() { return id; }
 
     public void setId(String id) {this.id = id; }
