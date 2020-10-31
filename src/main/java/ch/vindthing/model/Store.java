@@ -30,6 +30,9 @@ public class Store {
   private Set<Item> items = new HashSet<>();
 
   @DBRef
+  private Set<Store> stores = new HashSet<>();
+
+  @DBRef
   private Set<User> users = new HashSet<>();
 
   public Store() {
@@ -55,9 +58,7 @@ public class Store {
     this.id = id;
   }
 
-  public String getName() {
-    return name;
-  }
+  public String getName() { return name; }
 
   public void setName(String name) {
     this.name = name;
@@ -81,6 +82,12 @@ public class Store {
 
   public void setItems(Set<Item> item) {
     this.items = item;
+  }
+
+  public Set<Store> getStores() { return stores; }
+
+  public void setStores(Set<Store> store) {
+    this.stores = store;
   }
 
   public Set<User> getUsers() {

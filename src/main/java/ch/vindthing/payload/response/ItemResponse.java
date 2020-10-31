@@ -1,15 +1,14 @@
-package ch.vindthing.payload.request;
+package ch.vindthing.payload.response;
 
-import javax.validation.constraints.*;
+import ch.vindthing.payload.ItemPayload;
 
-public class ItemRequest {
+public class ItemResponse implements ItemPayload {
     private String id;
     private String name;
     private String description;
     private int quantity;
-    private String store; // Store to which item belongs to
 
-    public ItemRequest(String id, String name, String description, int quantity) {
+    public ItemResponse(String id, String name, String description, int quantity) {
         this.id = id;
         this.name = name;
         this.description = description;
@@ -41,12 +40,4 @@ public class ItemRequest {
     }
 
     public void setQuantity(int quantity) { this.quantity = quantity; }
-
-    public String getStore() {
-        return this.store;
-    }
-
-    public void setStore(String stores) {
-        this.store = stores;
-    }
 }

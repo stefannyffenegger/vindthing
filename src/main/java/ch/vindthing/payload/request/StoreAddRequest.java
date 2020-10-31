@@ -1,25 +1,26 @@
 package ch.vindthing.payload.request;
 
-import javax.validation.constraints.NotBlank;
-import java.util.Set;
+import ch.vindthing.payload.StorePayload;
 
-public class StoreRequest {
-    private String id;
+import javax.validation.constraints.NotBlank;
+
+public class StoreAddRequest implements StorePayload {
+    @NotBlank
     private String name;
     private String description;
     private String location;
-    private Set<String> items;
 
-    public StoreRequest(String id, String name, String description, String location) {
-        this.id = id;
+    /**
+     * Request to add a new Store
+     * @param name Required
+     * @param description Optional
+     * @param location Optional
+     */
+    public StoreAddRequest(String name, String description, String location) {
         this.name = name;
         this.description = description;
         this.location = location;
     }
-
-    public String getId() { return id; }
-
-    public void setId(String id) {this.id = id; }
 
     public String getDescription() {
         return description;
@@ -42,10 +43,4 @@ public class StoreRequest {
     }
 
     public void setLocation(String location) { this.location = location; }
-
-    public Set<String> getItems() {
-        return this.items;
-    }
-
-    public void setItem(Set<String> items) { this.items = items; }
 }
