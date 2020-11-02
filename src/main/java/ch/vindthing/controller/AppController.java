@@ -2,10 +2,7 @@ package ch.vindthing.controller;
 
 import ch.vindthing.model.Item;
 import ch.vindthing.model.Store;
-import ch.vindthing.payload.request.ItemAddRequest;
-import ch.vindthing.payload.request.ItemUpdateRequest;
-import ch.vindthing.payload.request.StoreAddRequest;
-import ch.vindthing.payload.request.StoreUpdateRequest;
+import ch.vindthing.payload.request.*;
 import ch.vindthing.payload.response.ItemResponse;
 import ch.vindthing.payload.response.MessageResponse;
 import ch.vindthing.payload.response.StoreResponse;
@@ -69,9 +66,7 @@ public class AppController {
     }
 
     /**
-     * Update an Item
-     * storeId provided: Item is deleted from current store and added to new store
-     * A new Item id will be generated
+     * Update an existing Item
      * @param itemUpdateRequest Request, must contain Item id
      * @return Response with ID, Name, Description, Quantity
      */
@@ -82,29 +77,43 @@ public class AppController {
         Item item = itemRepository.findById(itemUpdateRequest.getId())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
                         "Item Update: Item ID not found: " + itemUpdateRequest.getId()));
-        if(itemUpdateRequest.getStoreId()!=null && !itemUpdateRequest.getStoreId().equals("")){ // Move to new store
-            Store store = storeRepository.findById(itemUpdateRequest.getStoreId()).orElseThrow(() ->
-                    new ResponseStatusException(HttpStatus.NOT_FOUND,
-                            "Item Update Move: Store ID not found: " + itemUpdateRequest.getStoreId()));
-            itemRepository.delete(item); // Delete here and add new Item to other Store
-            //item.setId(null); // todo needed?
-            item = itemRepository.save(item); //todo old item id?
-            Set<Item> items = store.getItems(); // Add Item to other Store
-            items.add(item);
-            store.setItems(items);
-            storeRepository.save(store); // Update Store
-        }else{
-            if(itemUpdateRequest.getName()!=null && !itemUpdateRequest.getName().equals("")){
-                item.setName(itemUpdateRequest.getName());
-            }
-            if(itemUpdateRequest.getDescription()!=null && !itemUpdateRequest.getDescription().equals("")){
-                item.setDescription(itemUpdateRequest.getDescription());
-            }
-            if(itemUpdateRequest.getQuantity() != 0){
-                item.setQuantity(itemUpdateRequest.getQuantity());
-            }
-            itemRepository.save(item);
+        if(itemUpdateRequest.getName()!=null && !itemUpdateRequest.getName().equals("")){
+            item.setName(itemUpdateRequest.getName());
         }
+        if(itemUpdateRequest.getDescription()!=null && !itemUpdateRequest.getDescription().equals("")){
+            item.setDescription(itemUpdateRequest.getDescription());
+        }
+        if(itemUpdateRequest.getQuantity() != 0){
+            item.setQuantity(itemUpdateRequest.getQuantity());
+        }
+        itemRepository.save(item);
+        return ResponseEntity.ok(new ItemResponse(
+                item.getId(), item.getName(), item.getDescription(), item.getQuantity()));
+    }
+
+    /**
+     * Move an existing Item to another Store
+     * A new Item id will be generated
+     * @param itemMoveRequest Request, must contain Item id and new Store id
+     * @return Response with ID, Name, Description, Quantity
+     */
+    @RequestMapping("/item/move")
+    @PreAuthorize("hasRole('USER') or hasRole('MODERATOR') or hasRole('ADMIN')")
+    public ResponseEntity<?> moveItem(@Valid @RequestBody() ItemMoveRequest itemMoveRequest) {
+        // TODO: Only Items/Stores of User
+        Item item = itemRepository.findById(itemMoveRequest.getId())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                        "Item Move: Item ID not found: " + itemMoveRequest.getId()));
+        Store store = storeRepository.findById(itemMoveRequest.getStoreId()).orElseThrow(() ->
+                new ResponseStatusException(HttpStatus.NOT_FOUND,
+                        "Item Move: Store ID not found: " + itemMoveRequest.getStoreId()));
+        itemRepository.deleteById(item.getId()); // Delete here and add new Item to other Store
+        item.setId(null);
+        item = itemRepository.save(item);
+        Set<Item> items = store.getItems(); // Add Item to other Store
+        items.add(item);
+        store.setItems(items);
+        storeRepository.save(store); // Update Store
         return ResponseEntity.ok(new ItemResponse(
                 item.getId(), item.getName(), item.getDescription(), item.getQuantity()));
     }
@@ -118,15 +127,11 @@ public class AppController {
     @PreAuthorize("hasRole('USER') or hasRole('MODERATOR') or hasRole('ADMIN')")
     public ResponseEntity<?> deleteItem(@Valid @RequestBody() ItemUpdateRequest itemUpdateRequest) {
         // TODO: only stores of user, what happens in store if item deleted?
-        // Check if id or name
-        if(itemUpdateRequest.getId()!=null && !itemUpdateRequest.getId().equals("")){
-            Item item = itemRepository.findById(itemUpdateRequest.getId())
-                    .orElseThrow(() ->
-                            new UsernameNotFoundException("Item Delete: ID not found: " + itemUpdateRequest.getId()));
-            itemRepository.delete(item);
-            return ResponseEntity.ok(new MessageResponse("Item successfully deleted!"));
-        }
-        return ResponseEntity.badRequest().body(new MessageResponse("No ID provided!"));
+        Item item = itemRepository.findById(itemUpdateRequest.getId())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                        "Item Delete: Item ID not found: " + itemUpdateRequest.getId()));
+        itemRepository.deleteById(item.getId());
+        return ResponseEntity.ok(new MessageResponse("Item successfully deleted!"));
     }
 
     /**
@@ -138,7 +143,8 @@ public class AppController {
     @PreAuthorize("hasRole('USER') or hasRole('MODERATOR') or hasRole('ADMIN')")
     public ResponseEntity<?> addStore(@Valid @RequestBody() StoreAddRequest storeAddRequest) {
         // TODO: Add User to store from token
-        Store store = new Store(storeAddRequest.getName(), storeAddRequest.getDescription(), storeAddRequest.getLocation());
+        Store store = new Store(storeAddRequest.getName(), storeAddRequest.getDescription(),
+                storeAddRequest.getLocation());
         storeRepository.save(store); // Save store
         return ResponseEntity.ok(
                 new StoreResponse(store.getId(), store.getName(), store.getDescription(), store.getLocation()));
@@ -154,7 +160,8 @@ public class AppController {
     public ResponseEntity<?> updateStore(@Valid @RequestBody() StoreUpdateRequest storeUpdateRequest) {
         // TODO: Get User from token, check if store from user
         Store store = storeRepository.findById(storeUpdateRequest.getId()).orElseThrow(() ->
-                new UsernameNotFoundException("Store Update: ID Not Found: " + storeUpdateRequest.getId()));
+                new ResponseStatusException(HttpStatus.NOT_FOUND,
+                        "Store Update: Store ID not found: " + storeUpdateRequest.getId()));
         if(storeUpdateRequest.getName()!=null && !storeUpdateRequest.getName().equals("")){
             store.setName(storeUpdateRequest.getName());
         }
@@ -171,22 +178,18 @@ public class AppController {
 
     /**
      * Deletes a store if correct ID is provided
-     * @param storeRequest Request
+     * @param storeUpdateRequest Request
      * @return Status Response
      */
     @RequestMapping("/store/delete")
     @PreAuthorize("hasRole('USER') or hasRole('MODERATOR') or hasRole('ADMIN')")
-    public ResponseEntity<?> deleteStore(@Valid @RequestBody() StoreUpdateRequest storeRequest) {
+    public ResponseEntity<?> deleteStore(@Valid @RequestBody() StoreUpdateRequest storeUpdateRequest) {
         // TODO: only stores of user, delete all items in store first
-        // Check if id or name
-        if(storeRequest.getId()!=null && !storeRequest.getId().equals("")){
-            Store store = storeRepository.findById(storeRequest.getId())
-                    .orElseThrow(() ->
-                            new UsernameNotFoundException("Store ID Not Found: " + storeRequest.getId()));
-            storeRepository.delete(store);
-            return ResponseEntity.ok(new MessageResponse("Store deleted!"));
-        }
-        return ResponseEntity.badRequest().body(new MessageResponse("No ID provided!"));
+        Store store = storeRepository.findById(storeUpdateRequest.getId())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                        "Store Delete: Store ID not found: " + storeUpdateRequest.getId()));
+        storeRepository.delete(store);
+        return ResponseEntity.ok(new MessageResponse("Store deleted!"));
     }
 
     /**

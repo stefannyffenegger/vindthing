@@ -10,10 +10,9 @@ public class ItemUpdateRequest implements ItemPayload {
     private String name;
     private String description;
     private int quantity;
-    private String storeId; // Store to which item moves
 
     /**
-     * Request to update or delete an existing Item, or move an Item to another Store
+     * Request to update or delete an existing Item
      * @param id Required
      * @param name Optional
      * @param description Optional
@@ -51,13 +50,5 @@ public class ItemUpdateRequest implements ItemPayload {
     }
 
     public void setQuantity(int quantity) { this.quantity = quantity; }
-
-    public String getStoreId() {
-        return this.storeId;
-    }
-
-    public void setStoreId(String storeId) {
-        this.storeId = storeId;
-    }
 }
 
