@@ -24,6 +24,9 @@ import javax.validation.Valid;
 import java.util.List;
 import java.util.Set;
 
+/**
+ * Controls the Application API for the Frontend
+ */
 @CrossOrigin(origins = "*", maxAge = 3600)
 @Controller
 @RequestMapping("/api/")
@@ -200,7 +203,12 @@ public class AppController {
     @PreAuthorize("hasRole('USER') or hasRole('MODERATOR') or hasRole('ADMIN')")
     public ResponseEntity<?> getAllStores() {
         // TODO: only stores of user
-        List<Store> store = storeRepository.findAll();
+        List<Store> store = storeRepository.findAll(); //todo stream filter :(
+/*                .stream()
+                .filter(filst -> !filst.getUsers()
+                        .stream()
+                        .filter(filus -> !filus.getId()));*/
+
         return ResponseEntity.ok(store);
     }
 

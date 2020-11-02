@@ -9,6 +9,7 @@ import javax.validation.Valid;
 import ch.vindthing.payload.response.UserResponse;
 import ch.vindthing.repository.RoleRepository;
 import ch.vindthing.repository.UserRepository;
+import ch.vindthing.security.jwt.AuthTokenFilter;
 import ch.vindthing.security.jwt.JwtUtils;
 import ch.vindthing.service.UserDetailsImpl;
 import org.springframework.beans.factory.annotation.Autowired;
