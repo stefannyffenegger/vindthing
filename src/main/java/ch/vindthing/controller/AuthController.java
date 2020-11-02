@@ -54,7 +54,6 @@ public class AuthController {
 
     /**
      * Signin/Login user
-     *
      * @param loginRequest Request
      * @return Response
      */
@@ -77,7 +76,6 @@ public class AuthController {
 
     /**
      * Signup new users
-     *
      * @param signUpRequest Request
      * @return Respoonse
      */
@@ -133,26 +131,20 @@ public class AuthController {
 
     /**
      * Get user profile information from JWT
-     *
      * @return Response
      */
     @RequestMapping("/profile/get")
     @PreAuthorize("hasRole('USER') or hasRole('MODERATOR') or hasRole('ADMIN')")
     public ResponseEntity<?> getUserProfile(@Valid @RequestHeader (name="Authorization") String token) {
-        if (StringUtils.hasText(token) && token.startsWith("Bearer ")) {
-            token = token.substring(7);
+        User user = jwtUtils.getUserFromJwtToken(token);
+
+        if (user != null) {
+            List<String> roles = user.getRoles().stream()
+                    .map(item -> item.getName().toString())
+                    .collect(Collectors.toList());
+            return ResponseEntity.ok(new UserResponse(user.getName(), user.getEmail(), roles));
         }else{
             return ResponseEntity.badRequest().body("couldn't find profile");
         }
-        String email = jwtUtils.getEmailFromJwtToken(token);
-
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new UsernameNotFoundException("User Not Found with username: " + email));
-
-        List<String> roles = user.getRoles().stream()
-                .map(item -> item.getName().toString())
-                .collect(Collectors.toList());
-
-        return ResponseEntity.ok(new UserResponse(user.getName(), user.getEmail(), roles));
     }
 }

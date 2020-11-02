@@ -44,10 +44,11 @@ public class Store {
    * @param description Store description
    * @param location Store location
    */
-  public Store(String name, String description, String location) {
+  public Store(String name, String description, String location, User user) {
     this.name = name;
     this.description = description;
     this.location = location;
+    this.users.add(user);
   }
 
   public String getId() {

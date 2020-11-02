@@ -2,14 +2,20 @@ package ch.vindthing.security.jwt;
 
 import java.util.Date;
 
+import ch.vindthing.model.User;
+import ch.vindthing.repository.UserRepository;
 import ch.vindthing.service.UserDetailsImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Component;
 
 import io.jsonwebtoken.*;
+import org.springframework.util.StringUtils;
 
 @Component
 public class JwtUtils {
@@ -21,10 +27,16 @@ public class JwtUtils {
 	@Value("${vindthing.app.jwtExpirationMs}")
 	private int jwtExpirationMs;
 
+	@Autowired
+	UserRepository userRepository;
+
+	/**
+	 * Generate a new JWT Token
+	 * @param authentication Auth object
+	 * @return JWT Token
+	 */
 	public String generateJwtToken(Authentication authentication) {
-
 		UserDetailsImpl userPrincipal = (UserDetailsImpl) authentication.getPrincipal();
-
 		return Jwts.builder()
 				.setSubject((userPrincipal.getUsername()))
 				.setIssuedAt(new Date())
@@ -33,10 +45,36 @@ public class JwtUtils {
 				.compact();
 	}
 
+	/**
+	 * Extracts the email from the jwt token
+	 * @param token jwt token
+	 * @return email
+	 */
 	public String getEmailFromJwtToken(String token) {
 		return Jwts.parser().setSigningKey(jwtSecret).parseClaimsJws(token).getBody().getSubject();
 	}
 
+	/**
+	 * Gets the actual user object from the request jwt token
+	 * @param token jwt token
+	 * @return User or null if not found
+	 */
+	public User getUserFromJwtToken(String token){
+		if (StringUtils.hasText(token) && token.startsWith("Bearer ")) {
+			token = token.substring(7);
+		}else{
+			return null;
+		}
+		String email = getEmailFromJwtToken(token);
+		return userRepository.findByEmail(email)
+				.orElseThrow(() -> new UsernameNotFoundException("User Not Found with username: " + email));
+	}
+
+	/**
+	 * Validates JWT Tokens
+	 * @param authToken jwt token
+	 * @return true or false
+	 */
 	public boolean validateJwtToken(String authToken) {
 		try {
 			Jwts.parser().setSigningKey(jwtSecret).parseClaimsJws(authToken);
@@ -52,7 +90,6 @@ public class JwtUtils {
 		} catch (IllegalArgumentException e) {
 			logger.error("JWT claims string is empty: {}", e.getMessage());
 		}
-
 		return false;
 	}
 }

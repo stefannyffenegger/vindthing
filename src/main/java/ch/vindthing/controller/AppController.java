@@ -2,6 +2,7 @@ package ch.vindthing.controller;
 
 import ch.vindthing.model.Item;
 import ch.vindthing.model.Store;
+import ch.vindthing.model.User;
 import ch.vindthing.payload.request.*;
 import ch.vindthing.payload.response.ItemResponse;
 import ch.vindthing.payload.response.MessageResponse;
@@ -16,10 +17,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
 import javax.validation.Valid;
@@ -141,10 +139,11 @@ public class AppController {
      */
     @RequestMapping("/store/add")
     @PreAuthorize("hasRole('USER') or hasRole('MODERATOR') or hasRole('ADMIN')")
-    public ResponseEntity<?> addStore(@Valid @RequestBody() StoreAddRequest storeAddRequest) {
-        // TODO: Add User to store from token
+    public ResponseEntity<?> addStore(@Valid @RequestHeader(name="Authorization") String token,
+                                      @Valid @RequestBody() StoreAddRequest storeAddRequest) {
+        User user = jwtUtils.getUserFromJwtToken(token);
         Store store = new Store(storeAddRequest.getName(), storeAddRequest.getDescription(),
-                storeAddRequest.getLocation());
+                storeAddRequest.getLocation(), user);
         storeRepository.save(store); // Save store
         return ResponseEntity.ok(
                 new StoreResponse(store.getId(), store.getName(), store.getDescription(), store.getLocation()));
