@@ -12,13 +12,13 @@ import org.springframework.web.bind.annotation.*;
  */
 @CrossOrigin(origins = "*", maxAge = 3600)
 @RestController
-//@RequestMapping("/ws")
+@RequestMapping("/api/chat")
 public class WebSocketConnectionRestController {
 
     @Autowired
     private ActiveUserManager activeSessionManager;
 
-    @PostMapping("/rest/user-connect")
+    @PostMapping("/user-connect")
     public String userConnect(HttpServletRequest request, @ModelAttribute("username") String userName) {
         String remoteAddr = "";
         System.out.println("User connected");
@@ -39,14 +39,14 @@ public class WebSocketConnectionRestController {
         return remoteAddr;
     }
 
-    @PostMapping("/rest/user-disconnect")
+    @PostMapping("/user-disconnect")
     public String userDisconnect(@ModelAttribute("username") String userName) {
         activeSessionManager.remove(userName);
         return "disconnected";
     }
 
-    @GetMapping("/rest/active-users-except/{userName}")
-    public Set<String> getActiveUsersExceptCurrentUser(@PathVariable String userName) {
-        return activeSessionManager.getActiveUsersExceptCurrentUser(userName);
+    @GetMapping("/active-users-except/{username}")
+    public Set<String> getActiveUsersExceptCurrentUser(@PathVariable String username) {
+        return activeSessionManager.getActiveUsersExceptCurrentUser(username);
     }
 }

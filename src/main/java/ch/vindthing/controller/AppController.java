@@ -12,6 +12,7 @@ import ch.vindthing.repository.StoreRepository;
 import ch.vindthing.repository.UserRepository;
 import ch.vindthing.security.jwt.JwtUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -62,7 +63,7 @@ public class AppController {
         items.add(item);
         store.setItems(items);
         storeRepository.save(store); // Update Store
-        return ResponseEntity.ok(new ItemResponse(
+        return ResponseEntity.status(HttpStatus.CREATED).body(new ItemResponse(
                 item.getId(), item.getName(), item.getDescription(), item.getQuantity()));
     }
 
@@ -148,7 +149,7 @@ public class AppController {
         Store store = new Store(storeAddRequest.getName(), storeAddRequest.getDescription(),
                 storeAddRequest.getLocation(), user);
         storeRepository.save(store); // Save store
-        return ResponseEntity.ok(
+        return ResponseEntity.status(HttpStatus.CREATED).body(
                 new StoreResponse(store.getId(), store.getName(), store.getDescription(), store.getLocation()));
     }
 

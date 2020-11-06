@@ -21,8 +21,6 @@ import org.springframework.web.bind.annotation.GetMapping;
 @Controller
 //@RequestMapping("/ws")
 public class WebSocketChatController implements ActiveUserChangeListener {
-    // private final static Logger LOGGER = LoggerFactory.getLogger(WebSocketChatController.class);
-
     @Autowired
     private SimpMessagingTemplate webSocket;
 
