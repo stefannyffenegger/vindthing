@@ -2,6 +2,7 @@ package ch.vindthing.controller;
 
 import ch.vindthing.util.ChatMessage;
 
+import java.util.Objects;
 import java.util.Set;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
@@ -13,14 +14,14 @@ import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
 
 /**
  * Handles all messages
  */
 @CrossOrigin(origins = "*", maxAge = 3600)
 @Controller
-//@RequestMapping("/ws")
-public class WebSocketChatController implements ActiveUserChangeListener {
+public class WebSocketController implements ActiveUserChangeListener {
     @Autowired
     private SimpMessagingTemplate webSocket;
 
@@ -37,12 +38,12 @@ public class WebSocketChatController implements ActiveUserChangeListener {
         activeUserManager.removeListener(this);
     }
 
-    @GetMapping("/webchat")
-    public String getWebSocketWithSockJs() {return "webchat";}
+    //@GetMapping("/webchat")
+    //public String getWebSocketWithSockJs() {return "webchat";}
 
-    @MessageMapping("/chat")
+    @MessageMapping("/ws/chat")
     public void send(SimpMessageHeaderAccessor sha, @Payload ChatMessage chatMessage) throws Exception {
-        String sender = sha.getUser().getName();
+        String sender = Objects.requireNonNull(sha.getUser()).getName();
         ChatMessage message = new ChatMessage(chatMessage.getFrom(), chatMessage.getText(), chatMessage.getRecipient());
         if (!sender.equals(chatMessage.getRecipient())) {
             webSocket.convertAndSendToUser(sender, "/queue/messages", message);
