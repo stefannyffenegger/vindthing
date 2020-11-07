@@ -1,18 +1,23 @@
 package ch.vindthing.payload.response;
 
 import ch.vindthing.payload.ItemPayload;
+import ch.vindthing.util.StringUtils;
 
 public class ItemResponse implements ItemPayload {
     private String id;
     private String name;
     private String description;
     private int quantity;
+    private final String created;
+    private String lastedit;
 
-    public ItemResponse(String id, String name, String description, int quantity) {
+    public ItemResponse(String id, String name, String description, int quantity, String created, String lastedit) {
         this.id = id;
         this.name = name;
         this.description = description;
         this.quantity = quantity;
+        this.created = created;
+        this.lastedit = lastedit;
     }
 
     public String getId() { return id; }
@@ -40,4 +45,16 @@ public class ItemResponse implements ItemPayload {
     }
 
     public void setQuantity(int quantity) { this.quantity = quantity; }
+
+    public String getCreated() {
+        return created;
+    }
+
+    public String getLastedit() {
+        return lastedit;
+    }
+
+    public void setLastedit(String lastedit) {
+        this.lastedit = lastedit;
+    }
 }

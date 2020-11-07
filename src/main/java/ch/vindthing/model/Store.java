@@ -1,5 +1,7 @@
 package ch.vindthing.model;
 
+import ch.vindthing.util.StringUtils;
+import org.apache.coyote.http11.filters.SavedRequestInputFilter;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.DBRef;
 import org.springframework.data.mongodb.core.mapping.Document;
@@ -14,88 +16,113 @@ import java.util.Set;
  */
 @Document(collection = "stores")
 public class Store {
-  @Id
-  private String id;
+    @Id
+    private String id;
 
-  @NotBlank
-  @Size(max = 20)
-  private String name;
+    @NotBlank
+    @Size(max = 20)
+    private String name;
 
-  @Size(max = 250)
-  private String description;
+    @Size(max = 250)
+    private String description;
 
-  private String location;
+    private String location;
 
-  @DBRef
-  private Set<Item> items = new HashSet<>();
+    @DBRef
+    private Set<Item> items = new HashSet<>();
 
-  @DBRef
-  private Set<Store> stores = new HashSet<>();
+    @DBRef
+    private Set<Store> stores = new HashSet<>();
 
-  @DBRef
-  private Set<User> users = new HashSet<>();
+    @DBRef
+    private Set<User> users = new HashSet<>();
 
-  public Store() {
-  }
+    private String created;
 
-  /**
-   *
-   * @param name Store name
-   * @param description Store description
-   * @param location Store location
-   */
-  public Store(String name, String description, String location, User user) {
-    this.name = name;
-    this.description = description;
-    this.location = location;
-    this.users.add(user);
-  }
+    private String lastedit;
 
-  public String getId() {
-    return id;
-  }
+    public Store() {
+    }
 
-  public void setId(String id) {
-    this.id = id;
-  }
+    /**
+     * @param name        Store name
+     * @param description Store description
+     * @param location    Store location
+     */
+    public Store(String name, String description, String location, User user) {
+        this.name = name;
+        this.description = description;
+        this.location = location;
+        this.users.add(user);
+        this.created = StringUtils.getCurrentTimeStamp();
+        this.lastedit = StringUtils.getCurrentTimeStamp();
+    }
 
-  public String getName() { return name; }
+    public String getId() {
+        return id;
+    }
 
-  public void setName(String name) {
-    this.name = name;
-  }
+    public void setId(String id) {
+        this.id = id;
+    }
 
-  public String getDescription() {
-    return description;
-  }
+    public String getName() {
+        return name;
+    }
 
-  public void setDescription(String description) {
-    this.description = description;
-  }
+    public void setName(String name) {
+        this.name = name;
+    }
 
-  public String getLocation() { return location; }
+    public String getDescription() {
+        return description;
+    }
 
-  public void setLocation(String quantity) { this.location = quantity; }
+    public void setDescription(String description) {
+        this.description = description;
+    }
 
-  public Set<Item> getItems() {
-    return items;
-  }
+    public String getLocation() {
+        return location;
+    }
 
-  public void setItems(Set<Item> item) {
-    this.items = item;
-  }
+    public void setLocation(String quantity) {
+        this.location = quantity;
+    }
 
-  public Set<Store> getStores() { return stores; }
+    public Set<Item> getItems() {
+        return items;
+    }
 
-  public void setStores(Set<Store> store) {
-    this.stores = store;
-  }
+    public void setItems(Set<Item> item) {
+        this.items = item;
+    }
 
-  public Set<User> getUsers() {
-    return users;
-  }
+    public Set<Store> getStores() {
+        return stores;
+    }
 
-  public void setUsers(Set<User> user) {
-    this.users = user;
-  }
+    public void setStores(Set<Store> store) {
+        this.stores = store;
+    }
+
+    public Set<User> getUsers() {
+        return users;
+    }
+
+    public void setUsers(Set<User> user) {
+        this.users = user;
+    }
+
+    public String getCreated() {
+        return created;
+    }
+
+    public String getLastedit() {
+        return lastedit;
+    }
+
+    public void setLastedit(String lastedit) {
+        this.lastedit = lastedit;
+    }
 }

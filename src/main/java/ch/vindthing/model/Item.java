@@ -1,72 +1,95 @@
 package ch.vindthing.model;
 
+import ch.vindthing.util.StringUtils;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
+
 import javax.validation.constraints.Size;
 
 @Document(collection = "items")
 public class Item {
-  @Id
-  private String id;
+    @Id
+    private String id;
 
-  @Size(max = 20)
-  private String name;
+    @Size(max = 20)
+    private String name;
 
-  @Size(max = 250)
-  private String description;
+    @Size(max = 250)
+    private String description;
 
-  private int quantity;
+    private int quantity;
 
-  private String imageUrl;
+    private String imageUrl;
 
-  public Item() {
-  }
+    private String created;
 
-  /**
-   *
-   * @param name Item name
-   * @param description Item description
-   * @param quantity Item quantity
-   */
-  public Item(String name, String description, int quantity) {
-    this.name = name;
-    this.description = description;
-    this.quantity = quantity;
-  }
+    private String lastedit;
 
-  public String getId() {
-    return id;
-  }
+    public Item() {
+    }
 
-  public void setId(String id) {
-    this.id = id;
-  }
+    /**
+     * @param name        Item name
+     * @param description Item description
+     * @param quantity    Item quantity
+     */
+    public Item(String name, String description, int quantity) {
+        this.name = name;
+        this.description = description;
+        this.quantity = quantity;
+        this.created = StringUtils.getCurrentTimeStamp();
+        this.lastedit = StringUtils.getCurrentTimeStamp();
+    }
 
-  public String getName() {
-    return name;
-  }
+    public String getId() {
+        return id;
+    }
 
-  public void setName(String name) {
-    this.name = name;
-  }
+    public void setId(String id) {
+        this.id = id;
+    }
 
-  public String getDescription() {
-    return description;
-  }
+    public String getName() {
+        return name;
+    }
 
-  public void setDescription(String description) {
-    this.description = description;
-  }
+    public void setName(String name) {
+        this.name = name;
+    }
 
-  public int getQuantity() { return quantity; }
+    public String getDescription() {
+        return description;
+    }
 
-  public void setQuantity(int quantity) { this.quantity = quantity; }
+    public void setDescription(String description) {
+        this.description = description;
+    }
 
-  public String getImageUrl() {
-    return imageUrl;
-  }
+    public int getQuantity() {
+        return quantity;
+    }
 
-  public void setImageUrl(String imageUrl) {
-    this.imageUrl = imageUrl;
-  }
+    public void setQuantity(int quantity) {
+        this.quantity = quantity;
+    }
+
+    public String getImageUrl() {
+        return imageUrl;
+    }
+
+    public void setImageUrl(String imageUrl) {
+        this.imageUrl = imageUrl;
+    }
+
+    public String getCreated() {
+        return created;
+    }
+
+    public String getLastedit() {
+        return lastedit;
+    }
+
+    public void setLastedit(String lastedit) {
+        this.lastedit = lastedit;
+    }
 }

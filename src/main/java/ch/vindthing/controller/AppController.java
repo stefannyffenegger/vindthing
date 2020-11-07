@@ -11,6 +11,7 @@ import ch.vindthing.repository.ItemRepository;
 import ch.vindthing.repository.StoreRepository;
 import ch.vindthing.repository.UserRepository;
 import ch.vindthing.security.jwt.JwtUtils;
+import ch.vindthing.util.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.http.HttpStatus;
@@ -59,12 +60,13 @@ public class AppController {
                         "Item Add: Store ID not found: " + itemAddRequest.getStoreId()));
         Item item = new Item(itemAddRequest.getName(), itemAddRequest.getDescription(), itemAddRequest.getQuantity());
         itemRepository.save(item); // Save new Item
-        Set<Item> items = store.getItems(); //todo test with only add
-        items.add(item);
-        store.setItems(items);
+        store.getItems().add(item);
+        //Set<Item> items = store.getItems(); //todo test with only add
+        //items.add(item);
+        //store.setItems(items);
         storeRepository.save(store); // Update Store
-        return ResponseEntity.status(HttpStatus.CREATED).body(new ItemResponse(
-                item.getId(), item.getName(), item.getDescription(), item.getQuantity()));
+        return ResponseEntity.status(HttpStatus.CREATED).body(new ItemResponse(item.getId(), item.getName(),
+                item.getDescription(), item.getQuantity(), item.getCreated(), item.getLastedit()));
     }
 
     /**
@@ -88,9 +90,10 @@ public class AppController {
         if(itemUpdateRequest.getQuantity() != 0){
             item.setQuantity(itemUpdateRequest.getQuantity());
         }
+        item.setLastedit(StringUtils.getCurrentTimeStamp()); // Update last edit
         itemRepository.save(item);
-        return ResponseEntity.ok(new ItemResponse(
-                item.getId(), item.getName(), item.getDescription(), item.getQuantity()));
+        return ResponseEntity.ok(new ItemResponse(item.getId(), item.getName(), item.getDescription(),
+                item.getQuantity(), item.getCreated(), item.getLastedit()));
     }
 
     /**
@@ -111,13 +114,14 @@ public class AppController {
                         "Item Move: Store ID not found: " + itemMoveRequest.getStoreId()));
         itemRepository.deleteById(item.getId()); // Delete here and add new Item to other Store
         item.setId(null);
+        item.setLastedit(StringUtils.getCurrentTimeStamp()); // Update last edit
         item = itemRepository.save(item);
         Set<Item> items = store.getItems(); // Add Item to other Store
         items.add(item);
         store.setItems(items);
         storeRepository.save(store); // Update Store
-        return ResponseEntity.ok(new ItemResponse(
-                item.getId(), item.getName(), item.getDescription(), item.getQuantity()));
+        return ResponseEntity.ok(new ItemResponse(item.getId(), item.getName(), item.getDescription(),
+                item.getQuantity(), item.getCreated(), item.getLastedit()));
     }
 
     /**
@@ -149,8 +153,8 @@ public class AppController {
         Store store = new Store(storeAddRequest.getName(), storeAddRequest.getDescription(),
                 storeAddRequest.getLocation(), user);
         storeRepository.save(store); // Save store
-        return ResponseEntity.status(HttpStatus.CREATED).body(
-                new StoreResponse(store.getId(), store.getName(), store.getDescription(), store.getLocation()));
+        return ResponseEntity.status(HttpStatus.CREATED).body(new StoreResponse(store.getId(),
+                store.getName(), store.getDescription(), store.getLocation(), store.getCreated(), store.getLastedit()));
     }
 
     /**
@@ -174,9 +178,10 @@ public class AppController {
         if(storeUpdateRequest.getLocation()!=null && !storeUpdateRequest.getLocation().equals("")){
             store.setLocation(storeUpdateRequest.getLocation());
         }
+        store.setLastedit(StringUtils.getCurrentTimeStamp()); // Update last edit
         storeRepository.save(store); // Update store
-        return ResponseEntity.ok(
-                new StoreResponse(store.getId(), store.getName(), store.getDescription(), store.getLocation()));
+        return ResponseEntity.ok(new StoreResponse(store.getId(), store.getName(), store.getDescription(),
+                store.getLocation(), store.getCreated(), store.getLastedit()));
     }
 
     /**
@@ -220,7 +225,7 @@ public class AppController {
         // TODO: only stores of user
         Store store = storeRepository.findByName(storeRequest.getName())
                 .orElseThrow(() -> new UsernameNotFoundException("Store Not Found: " + storeRequest.getName()));
-        return ResponseEntity.ok(new StoreResponse(
-                store.getId(), store.getName(), store.getDescription(), store.getLocation()));
+        return ResponseEntity.ok(new StoreResponse(store.getId(), store.getName(), store.getDescription(),
+                store.getLocation(), store.getCreated(), store.getLastedit()));
     }
 }
