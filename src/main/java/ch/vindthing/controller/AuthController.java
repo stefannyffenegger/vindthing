@@ -30,6 +30,8 @@ import ch.vindthing.payload.request.LoginRequest;
 import ch.vindthing.payload.request.SignupRequest;
 import ch.vindthing.payload.response.JwtResponse;
 import ch.vindthing.payload.response.MessageResponse;
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 /**
  * Controls the /api/auth API
@@ -131,10 +133,10 @@ public class AuthController {
     }
 
     /**
-     * Get user profile information from JWT
+     * Get user profile
      * @return Response
      */
-    @RequestMapping("/profile/get")
+    @GetMapping("/profile/get")
     @PreAuthorize("hasRole('USER') or hasRole('MODERATOR') or hasRole('ADMIN')")
     public ResponseEntity<?> getUserProfile(@Valid @RequestHeader (name="Authorization") String token) {
         User user = jwtUtils.getUserFromJwtToken(token);
@@ -147,5 +149,13 @@ public class AuthController {
         }else{
             return ResponseEntity.badRequest().body("couldn't find profile");
         }
+    }
+
+    @PostMapping("/profile/imageupload")
+    @PreAuthorize("hasRole('USER') or hasRole('MODERATOR') or hasRole('ADMIN')")
+    public ResponseEntity<?> uploadUserProfileImage(@RequestParam("file") MultipartFile file,
+                                                    RedirectAttributes redirectAttributes) {
+
+        return ResponseEntity.ok(new MessageResponse("Image uploaded!"));
     }
 }
