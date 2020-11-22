@@ -7,7 +7,6 @@ import ch.vindthing.payload.request.*;
 import ch.vindthing.payload.response.ItemResponse;
 import ch.vindthing.payload.response.MessageResponse;
 import ch.vindthing.payload.response.StoreResponse;
-import ch.vindthing.repository.ItemRepository;
 import ch.vindthing.repository.StoreRepository;
 import ch.vindthing.repository.UserRepository;
 import ch.vindthing.security.jwt.JwtUtils;
@@ -20,17 +19,12 @@ import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
 import javax.validation.Valid;
-import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
-import java.util.stream.DoubleStream;
 
 /**
  * Controls the Application API for the Frontend
@@ -66,7 +60,7 @@ public class AppController {
                         "Item Add: Store ID not found: " + itemAddRequest.getStoreId()));
 
         // Usercheck
-        if(!jwtUtils.checkStorePermission(token, store)){
+        if(!jwtUtils.checkPermissionOwner(token, store)){
             return ResponseEntity.badRequest().body("Item Add: No Permission for this Store!");
         }
 
@@ -91,7 +85,7 @@ public class AppController {
         try {
             Store store = mongoTemplate.findOne(query, Store.class);
             // Usercheck
-            if(!jwtUtils.checkStorePermission(token, store)){
+            if(!jwtUtils.checkPermissionOwner(token, store)){
                 return ResponseEntity.badRequest().body("Item Update: No Permission for this Store!");
             }
         }catch (Exception e) {
@@ -141,7 +135,7 @@ public class AppController {
                                       @RequestBody() ItemMoveRequest itemMoveRequest) {
         // Find Store and Item by Item ID
         Query query = new Query(Criteria.where("items._id").is(itemMoveRequest.getId()));
-        query.fields().include("items.$");
+        query.fields().include("items.$").include("owner");
 
         // Find Item and current Store
         Store store;
@@ -149,7 +143,7 @@ public class AppController {
         try{
             store = mongoTemplate.findOne(query, Store.class);
             // Usercheck current Store
-            if(!jwtUtils.checkStorePermission(token, store)){
+            if(!jwtUtils.checkPermissionOwner(token, store)){
                 return ResponseEntity.badRequest().body("Item Move: No Permission for this Store!");
             }
             item = store.getItems().get(0);
@@ -163,7 +157,7 @@ public class AppController {
                 orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
                         "Item Move: Store ID not found: " + itemMoveRequest.getStoreId()));
         // Usercheck new Store
-        if(!jwtUtils.checkStorePermission(token, newStore)){
+        if(!jwtUtils.checkPermissionOwner(token, newStore)){
             return ResponseEntity.badRequest().body("Item Move: No Permission for the new Store!");
         }
 
@@ -195,17 +189,20 @@ public class AppController {
                                         @RequestBody() ItemUpdateRequest itemUpdateRequest) {
         // Find Store and Item by Item ID
         Query query = new Query(Criteria.where("items._id").is(itemUpdateRequest.getId()));
-        query.fields().include("items.$");
+        query.fields().include("items.$").include("owner");
 
         Store store;
         Item item;
         try{
             store = mongoTemplate.findOne(query, Store.class);
+            System.out.println("STORE "+store.getId());
+            System.out.println("STORE "+store.getItems());
             // Usercheck
-            if(!jwtUtils.checkStorePermission(token, store)){
+            if(!jwtUtils.checkPermissionOwner(token, store)){
                 return ResponseEntity.badRequest().body("Item Delete: No Permission for this Store!");
             }
             item = store.getItems().get(0);
+            System.out.println("ITEM "+item.getId());
         }catch (Exception e) {
             return ResponseEntity.badRequest().body("Item Delete: Item ID not found: " + itemUpdateRequest.getId()
                     + " Exception: " + e);
@@ -248,7 +245,7 @@ public class AppController {
                 new ResponseStatusException(HttpStatus.NOT_FOUND,
                         "Store Update: Store ID not found: " + storeUpdateRequest.getId()));
         // Usercheck
-        if(!jwtUtils.checkStorePermission(token, store)){
+        if(!jwtUtils.checkPermissionOwner(token, store)){
             return ResponseEntity.badRequest().body("Store Update: No Permission for this Store!");
         }
         if(storeUpdateRequest.getName()!=null && !storeUpdateRequest.getName().equals("")){
@@ -279,7 +276,7 @@ public class AppController {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
                         "Store Delete: Store ID not found: " + storeUpdateRequest.getId()));
         // Usercheck
-        if(!jwtUtils.checkStorePermission(token, store)){
+        if(!jwtUtils.checkPermissionOwner(token, store)){
             return ResponseEntity.badRequest().body("Store Delete: No Permission for this Store!");
         }
         storeRepository.delete(store);
@@ -296,6 +293,8 @@ public class AppController {
     public ResponseEntity<?> getAllStores(@RequestHeader (name="Authorization") String token) {
         User user = jwtUtils.getUserFromJwtToken(token);
 
+        Query query = new Query();
+        query.fields().include("items.$");
         // TODO: only stores of user
         List<Store> store = storeRepository.findAll();
 

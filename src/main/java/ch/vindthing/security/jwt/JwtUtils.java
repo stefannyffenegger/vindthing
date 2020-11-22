@@ -71,13 +71,30 @@ public class JwtUtils {
 				.orElseThrow(() -> new UsernameNotFoundException("User Not Found with username: " + email));
 	}
 
-	public boolean checkStorePermission(String token, Store store){
+	/**
+	 *
+	 * @param token
+	 * @param store
+	 * @return
+	 */
+	public boolean checkPermissionOwner(String token, Store store){
 		User user = getUserFromJwtToken(token);
 		// Usercheck
 		if(store.getOwner().getId().equals(user.getId())){
 			return true;
 		}
 		return false;
+	}
+
+	/**
+	 *
+	 * @param token
+	 * @param store
+	 * @return
+	 */
+	public boolean checkPermissionSharedUsers(String token, Store store){
+		User user = getUserFromJwtToken(token);
+		return true;
 	}
 
 	/**
