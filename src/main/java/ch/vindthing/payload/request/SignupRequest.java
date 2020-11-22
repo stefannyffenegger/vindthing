@@ -1,9 +1,8 @@
 package ch.vindthing.payload.request;
 
 import java.util.Set;
-
 import javax.validation.constraints.*;
- 
+
 public class SignupRequest {
     @NotBlank
     @Size(min = 3, max = 20)

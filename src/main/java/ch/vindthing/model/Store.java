@@ -34,7 +34,7 @@ public class Store {
     private User owner;
 
     @DBRef
-    private Set<User> users = new HashSet<>();
+    private Set<User> sharedUsers = new HashSet<>();
 
     private String created;
 
@@ -97,20 +97,16 @@ public class Store {
         this.items = item;
     }
 
-    public User getOwner() {
-        return owner;
+    public User getOwner() { return owner; }
+
+    public void setOwner(User owner) { this.owner = owner; }
+
+    public Set<User> getSharedUsers() {
+        return sharedUsers;
     }
 
-    public void setOwner(User owner) {
-        this.owner = owner;
-    }
-
-    public Set<User> getUsers() {
-        return users;
-    }
-
-    public void setUsers(Set<User> user) {
-        this.users = user;
+    public void setSharedUsers(Set<User> user) {
+        this.sharedUsers = user;
     }
 
     public String getCreated() {

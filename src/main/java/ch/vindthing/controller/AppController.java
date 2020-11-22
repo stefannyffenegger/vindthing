@@ -231,7 +231,8 @@ public class AppController {
                 storeAddRequest.getLocation(), user);
         storeRepository.save(store); // Save store
         return ResponseEntity.status(HttpStatus.CREATED).body(new StoreResponse(store.getId(),
-                store.getName(), store.getDescription(), store.getLocation(), store.getCreated(), store.getLastedit()));
+                store.getName(), store.getDescription(), store.getLocation(), store.getCreated(), store.getLastedit(),
+                store.getOwner().toString()));
     }
 
     /**
@@ -262,7 +263,7 @@ public class AppController {
         store.setLastedit(StringUtils.getCurrentTimeStamp()); // Update last edit
         storeRepository.save(store); // Update store
         return ResponseEntity.ok(new StoreResponse(store.getId(), store.getName(), store.getDescription(),
-                store.getLocation(), store.getCreated(), store.getLastedit()));
+                store.getLocation(), store.getCreated(), store.getLastedit(), store.getOwner().toString()));
     }
 
     /**

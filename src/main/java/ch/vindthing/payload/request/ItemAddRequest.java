@@ -3,7 +3,11 @@ package ch.vindthing.payload.request;
 import ch.vindthing.payload.ItemPayload;
 
 import javax.validation.constraints.NotBlank;
+import lombok.Getter;
+import lombok.Setter;
 
+@Getter
+@Setter
 public class ItemAddRequest implements ItemPayload {
     @NotBlank
     private String name;
@@ -22,36 +26,6 @@ public class ItemAddRequest implements ItemPayload {
         this.name = name;
         this.description = description;
         this.quantity = quantity;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public int getQuantity() {
-        return quantity;
-    }
-
-    public void setQuantity(int quantity) { this.quantity = quantity; }
-
-    public String getStoreId() {
-        return this.storeId;
-    }
-
-    public void setStoreId(String storeId) {
-        this.storeId = storeId;
     }
 }
 
