@@ -5,9 +5,12 @@ import org.apache.coyote.http11.filters.SavedRequestInputFilter;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.DBRef;
 import org.springframework.data.mongodb.core.mapping.Document;
+import org.springframework.data.mongodb.core.mapping.Field;
 
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
+import java.lang.reflect.Array;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -28,8 +31,9 @@ public class Store {
 
     private String location;
 
-    @DBRef
-    private Set<Item> items = new HashSet<>();
+//    @Field("item")
+    private ArrayList<Item> items = new ArrayList<>();
+    //private Set<Item> items = new HashSet<>();
 
     @DBRef
     private Set<Store> stores = new HashSet<>();
@@ -90,11 +94,11 @@ public class Store {
         this.location = quantity;
     }
 
-    public Set<Item> getItems() {
+    public ArrayList<Item> getItems() {
         return items;
     }
 
-    public void setItems(Set<Item> item) {
+    public void setItems(ArrayList<Item> item) {
         this.items = item;
     }
 

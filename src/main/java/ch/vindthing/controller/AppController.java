@@ -13,7 +13,10 @@ import ch.vindthing.repository.UserRepository;
 import ch.vindthing.security.jwt.JwtUtils;
 import ch.vindthing.util.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -23,8 +26,11 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
 import javax.validation.Valid;
+import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.DoubleStream;
 
 /**
  * Controls the Application API for the Frontend
@@ -33,6 +39,9 @@ import java.util.Set;
 @Controller
 @RequestMapping("/api/")
 public class AppController {
+    @Autowired
+    MongoTemplate mongoTemplate;
+
     @Autowired
     ItemRepository itemRepository;
 
@@ -59,7 +68,7 @@ public class AppController {
                 orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
                         "Item Add: Store ID not found: " + itemAddRequest.getStoreId()));
         Item item = new Item(itemAddRequest.getName(), itemAddRequest.getDescription(), itemAddRequest.getQuantity());
-        itemRepository.save(item); // Save new Item
+        //itemRepository.save(item); // Save new Item
         store.getItems().add(item);
         //Set<Item> items = store.getItems(); //todo test with only add
         //items.add(item);
@@ -78,22 +87,37 @@ public class AppController {
     @PreAuthorize("hasRole('USER') or hasRole('MODERATOR') or hasRole('ADMIN')")
     public ResponseEntity<?> updateItem(@Valid @RequestBody() ItemUpdateRequest itemUpdateRequest) {
         // TODO: Only Items/Stores of User
-        Item item = itemRepository.findById(itemUpdateRequest.getId())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
-                        "Item Update: Item ID not found: " + itemUpdateRequest.getId()));
+        Query query = new Query();
+        query.addCriteria(Criteria.where("items._id").is(itemUpdateRequest.getId()));
+
+        Update update = new Update();
         if(itemUpdateRequest.getName()!=null && !itemUpdateRequest.getName().equals("")){
-            item.setName(itemUpdateRequest.getName());
+            update.set("items.$.name", itemUpdateRequest.getName());
         }
         if(itemUpdateRequest.getDescription()!=null && !itemUpdateRequest.getDescription().equals("")){
-            item.setDescription(itemUpdateRequest.getDescription());
+            update.set("items.$.description", itemUpdateRequest.getDescription());
         }
         if(itemUpdateRequest.getQuantity() != 0){
-            item.setQuantity(itemUpdateRequest.getQuantity());
+            update.set("items.$.quantity", itemUpdateRequest.getQuantity());
         }
-        item.setLastedit(StringUtils.getCurrentTimeStamp()); // Update last edit
-        itemRepository.save(item);
-        return ResponseEntity.ok(new ItemResponse(item.getId(), item.getName(), item.getDescription(),
-                item.getQuantity(), item.getCreated(), item.getLastedit()));
+        String timestamp = StringUtils.getCurrentTimeStamp();
+        update.set("items.$.lastedit", timestamp);
+        update.set("lastedit", timestamp);
+
+        Query query1 = new Query();
+        query1.fields().include("items.$");
+        query1.addCriteria(Criteria.where("items._id").is(itemUpdateRequest.getId()));
+
+        Item newItem;
+        try{
+            mongoTemplate.updateFirst(query, update, Store.class);
+            newItem = mongoTemplate.findOne(query1, Store.class).getItems().get(0);
+        }catch (Exception e) {
+            return ResponseEntity.badRequest().body("Item Update Failed for ID: " + itemUpdateRequest.getId() + " Exception " + e);
+        }
+
+        return ResponseEntity.ok(new ItemResponse(newItem.getId(), newItem.getName(), newItem.getDescription(),
+                newItem.getQuantity(), newItem.getCreated(), newItem.getLastedit()));
     }
 
     /**
@@ -116,7 +140,7 @@ public class AppController {
         item.setId(null);
         item.setLastedit(StringUtils.getCurrentTimeStamp()); // Update last edit
         item = itemRepository.save(item);
-        Set<Item> items = store.getItems(); // Add Item to other Store
+        ArrayList<Item> items = store.getItems(); // Add Item to other Store
         items.add(item);
         store.setItems(items);
         storeRepository.save(store); // Update Store

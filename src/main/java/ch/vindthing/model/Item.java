@@ -1,12 +1,13 @@
 package ch.vindthing.model;
 
 import ch.vindthing.util.StringUtils;
+import org.bson.types.ObjectId;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import javax.validation.constraints.Size;
 
-@Document(collection = "items")
+@Document
 public class Item {
     @Id
     private String id;
@@ -34,6 +35,7 @@ public class Item {
      * @param quantity    Item quantity
      */
     public Item(String name, String description, int quantity) {
+        this.id = new ObjectId().toString();
         this.name = name;
         this.description = description;
         this.quantity = quantity;
