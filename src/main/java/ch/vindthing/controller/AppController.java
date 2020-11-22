@@ -43,9 +43,6 @@ public class AppController {
     MongoTemplate mongoTemplate;
 
     @Autowired
-    ItemRepository itemRepository;
-
-    @Autowired
     StoreRepository storeRepository;
 
     @Autowired
@@ -61,18 +58,21 @@ public class AppController {
      */
     @RequestMapping("/item/add")
     @PreAuthorize("hasRole('USER') or hasRole('MODERATOR') or hasRole('ADMIN')")
-    public ResponseEntity<?> addItemToStore(@Valid @RequestBody() ItemAddRequest itemAddRequest) {
-        // TODO: Only Items/Stores of User
+    public ResponseEntity<?> addItemToStore(@Valid @RequestHeader (name="Authorization") String token,
+                                            @RequestBody() ItemAddRequest itemAddRequest) {
+        User user = jwtUtils.getUserFromJwtToken(token);
+
         // Check if store exists
         Store store = storeRepository.findById(itemAddRequest.getStoreId()).
                 orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
                         "Item Add: Store ID not found: " + itemAddRequest.getStoreId()));
+
+        // Usercheck
+        if(!store.getOwner().getId().equals(user.getId())){
+            return ResponseEntity.badRequest().body("Item Add: Not Store of User!");
+        }
         Item item = new Item(itemAddRequest.getName(), itemAddRequest.getDescription(), itemAddRequest.getQuantity());
-        //itemRepository.save(item); // Save new Item
         store.getItems().add(item);
-        //Set<Item> items = store.getItems(); //todo test with only add
-        //items.add(item);
-        //store.setItems(items);
         storeRepository.save(store); // Update Store
         return ResponseEntity.status(HttpStatus.CREATED).body(new ItemResponse(item.getId(), item.getName(),
                 item.getDescription(), item.getQuantity(), item.getCreated(), item.getLastedit()));
@@ -87,8 +87,8 @@ public class AppController {
     @PreAuthorize("hasRole('USER') or hasRole('MODERATOR') or hasRole('ADMIN')")
     public ResponseEntity<?> updateItem(@Valid @RequestBody() ItemUpdateRequest itemUpdateRequest) {
         // TODO: Only Items/Stores of User
-        Query query = new Query();
-        query.addCriteria(Criteria.where("items._id").is(itemUpdateRequest.getId()));
+        // Find Store by Item ID
+        Query query = new Query(Criteria.where("items._id").is(itemUpdateRequest.getId()));
 
         Update update = new Update();
         if(itemUpdateRequest.getName()!=null && !itemUpdateRequest.getName().equals("")){
@@ -104,20 +104,20 @@ public class AppController {
         update.set("items.$.lastedit", timestamp);
         update.set("lastedit", timestamp);
 
-        Query query1 = new Query();
-        query1.fields().include("items.$");
-        query1.addCriteria(Criteria.where("items._id").is(itemUpdateRequest.getId()));
+        // Find Item and send response
+        Query findQuery = query;
+        findQuery.fields().include("items.$");
 
         Item newItem;
         try{
             mongoTemplate.updateFirst(query, update, Store.class);
-            newItem = mongoTemplate.findOne(query1, Store.class).getItems().get(0);
+            newItem = mongoTemplate.findOne(findQuery, Store.class).getItems().get(0);
+            return ResponseEntity.ok(new ItemResponse(newItem.getId(), newItem.getName(), newItem.getDescription(),
+                    newItem.getQuantity(), newItem.getCreated(), newItem.getLastedit()));
         }catch (Exception e) {
-            return ResponseEntity.badRequest().body("Item Update Failed for ID: " + itemUpdateRequest.getId() + " Exception " + e);
+            return ResponseEntity.badRequest().body("Item Update Failed for ID: " + itemUpdateRequest.getId()
+                    + " Exception: " + e);
         }
-
-        return ResponseEntity.ok(new ItemResponse(newItem.getId(), newItem.getName(), newItem.getDescription(),
-                newItem.getQuantity(), newItem.getCreated(), newItem.getLastedit()));
     }
 
     /**
@@ -130,20 +130,38 @@ public class AppController {
     @PreAuthorize("hasRole('USER') or hasRole('MODERATOR') or hasRole('ADMIN')")
     public ResponseEntity<?> moveItem(@Valid @RequestBody() ItemMoveRequest itemMoveRequest) {
         // TODO: Only Items/Stores of User
-        Item item = itemRepository.findById(itemMoveRequest.getId())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
-                        "Item Move: Item ID not found: " + itemMoveRequest.getId()));
-        Store store = storeRepository.findById(itemMoveRequest.getStoreId()).orElseThrow(() ->
-                new ResponseStatusException(HttpStatus.NOT_FOUND,
+        Query query = new Query(Criteria.where("items._id").is(itemMoveRequest.getId()));
+        query.fields().include("items.$");
+
+        // Find Item
+        Store store;
+        Item item;
+        try{
+            store = mongoTemplate.findOne(query, Store.class);
+            item = store.getItems().get(0);
+            System.out.println("ITEM ID "+item.getId());
+        }catch (Exception e) {
+            return ResponseEntity.badRequest().body("Item Move: Item ID not found: " + itemMoveRequest.getId()
+                    + " Exception: " + e);
+        }
+
+        // Check if store exists
+        Store newStore = storeRepository.findById(itemMoveRequest.getStoreId()).
+                orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
                         "Item Move: Store ID not found: " + itemMoveRequest.getStoreId()));
-        itemRepository.deleteById(item.getId()); // Delete here and add new Item to other Store
-        item.setId(null);
-        item.setLastedit(StringUtils.getCurrentTimeStamp()); // Update last edit
-        item = itemRepository.save(item);
-        ArrayList<Item> items = store.getItems(); // Add Item to other Store
-        items.add(item);
-        store.setItems(items);
-        storeRepository.save(store); // Update Store
+        newStore.getItems().add(item);
+        storeRepository.save(newStore); // Update Store
+
+        // Delete Item
+        Query deleteQuery = new Query();
+        deleteQuery.addCriteria(new Criteria().andOperator(
+                Criteria.where("items._id").is(itemMoveRequest.getId()),
+                Criteria.where("_id").is(store.getId())));
+        deleteQuery.fields().include("items.$");
+
+        Update update = new Update().pull("items", item);
+        mongoTemplate.updateFirst(deleteQuery, update, Store.class);
+
         return ResponseEntity.ok(new ItemResponse(item.getId(), item.getName(), item.getDescription(),
                 item.getQuantity(), item.getCreated(), item.getLastedit()));
     }
@@ -156,12 +174,24 @@ public class AppController {
     @RequestMapping("/item/delete")
     @PreAuthorize("hasRole('USER') or hasRole('MODERATOR') or hasRole('ADMIN')")
     public ResponseEntity<?> deleteItem(@Valid @RequestBody() ItemUpdateRequest itemUpdateRequest) {
-        // TODO: only stores of user, what happens in store if item deleted?
-        Item item = itemRepository.findById(itemUpdateRequest.getId())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
-                        "Item Delete: Item ID not found: " + itemUpdateRequest.getId()));
-        itemRepository.deleteById(item.getId());
-        return ResponseEntity.ok(new MessageResponse("Item successfully deleted!"));
+
+        // TODO: only stores of user
+        Query query = new Query(Criteria.where("items._id").is(itemUpdateRequest.getId()));
+        query.fields().include("items.$");
+
+        Item newItem;
+        try{
+            newItem = mongoTemplate.findOne(query, Store.class).getItems().get(0);
+            System.out.println("ITEM ID "+newItem.getId());
+        }catch (Exception e) {
+            return ResponseEntity.badRequest().body("Item Delete: Item ID not found: " + itemUpdateRequest.getId()
+                    + " Exception: " + e);
+        }
+
+        // Delete Item
+        Update update = new Update().pull("items", newItem);
+        mongoTemplate.updateFirst(query, update, Store.class);
+        return ResponseEntity.ok(new MessageResponse("Item " + itemUpdateRequest.getId() + " successfully deleted!"));
     }
 
     /**

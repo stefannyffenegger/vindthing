@@ -1,15 +1,12 @@
 package ch.vindthing.model;
 
 import ch.vindthing.util.StringUtils;
-import org.apache.coyote.http11.filters.SavedRequestInputFilter;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.DBRef;
 import org.springframework.data.mongodb.core.mapping.Document;
-import org.springframework.data.mongodb.core.mapping.Field;
 
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
-import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
@@ -31,12 +28,10 @@ public class Store {
 
     private String location;
 
-//    @Field("item")
     private ArrayList<Item> items = new ArrayList<>();
-    //private Set<Item> items = new HashSet<>();
 
     @DBRef
-    private Set<Store> stores = new HashSet<>();
+    private User owner;
 
     @DBRef
     private Set<User> users = new HashSet<>();
@@ -57,7 +52,7 @@ public class Store {
         this.name = name;
         this.description = description;
         this.location = location;
-        this.users.add(user);
+        this.owner = user;
         this.created = StringUtils.getCurrentTimeStamp();
         this.lastedit = StringUtils.getCurrentTimeStamp();
     }
@@ -102,12 +97,12 @@ public class Store {
         this.items = item;
     }
 
-    public Set<Store> getStores() {
-        return stores;
+    public User getOwner() {
+        return owner;
     }
 
-    public void setStores(Set<Store> store) {
-        this.stores = store;
+    public void setOwner(User owner) {
+        this.owner = owner;
     }
 
     public Set<User> getUsers() {
