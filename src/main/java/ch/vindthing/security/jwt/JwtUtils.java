@@ -2,6 +2,7 @@ package ch.vindthing.security.jwt;
 
 import java.util.Date;
 
+import ch.vindthing.model.Store;
 import ch.vindthing.model.User;
 import ch.vindthing.repository.UserRepository;
 import ch.vindthing.service.UserDetailsImpl;
@@ -68,6 +69,15 @@ public class JwtUtils {
 		String email = getEmailFromJwtToken(token);
 		return userRepository.findByEmail(email)
 				.orElseThrow(() -> new UsernameNotFoundException("User Not Found with username: " + email));
+	}
+
+	public boolean checkStorePermission(String token, Store store){
+		User user = getUserFromJwtToken(token);
+		// Usercheck
+		if(store.getOwner().getId().equals(user.getId())){
+			return true;
+		}
+		return false;
 	}
 
 	/**

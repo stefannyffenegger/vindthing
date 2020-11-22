@@ -5,6 +5,7 @@ import org.springframework.data.mongodb.repository.MongoRepository;
 
 import java.util.Optional;
 
+@Deprecated
 public interface ItemRepository extends MongoRepository<Item, String> {
   Optional<Item> findByName(String name);
 
