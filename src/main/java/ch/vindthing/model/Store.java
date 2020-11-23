@@ -38,7 +38,7 @@ public class Store {
 
     private String created;
 
-    private String lastedit;
+    private String lastEdit;
 
     public Store() {
     }
@@ -52,9 +52,10 @@ public class Store {
         this.name = name;
         this.description = description;
         this.location = location;
-        this.owner = user;
+        this.owner = user; // Add as owner of Store
+        this.sharedUsers.add(user); // Add as regular user too
         this.created = StringUtils.getCurrentTimeStamp();
-        this.lastedit = StringUtils.getCurrentTimeStamp();
+        this.lastEdit = StringUtils.getCurrentTimeStamp();
     }
 
     public String getId() {
@@ -113,11 +114,11 @@ public class Store {
         return created;
     }
 
-    public String getLastedit() {
-        return lastedit;
+    public String getLastEdit() {
+        return lastEdit;
     }
 
-    public void setLastedit(String lastedit) {
-        this.lastedit = lastedit;
+    public void setLastEdit(String lastEdit) {
+        this.lastEdit = lastEdit;
     }
 }

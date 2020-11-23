@@ -14,6 +14,8 @@ public class StoreUpdateRequest implements StorePayload {
     private String name;
     private String description;
     private String location;
+    private String owner;
+    private String sharedUser;
 
     /**
      * Request to update or delete an existing Store
@@ -22,10 +24,12 @@ public class StoreUpdateRequest implements StorePayload {
      * @param description Optional
      * @param location Optional
      */
-    public StoreUpdateRequest(String id, String name, String description, String location) {
+    public StoreUpdateRequest(String id, String name, String description, String location, String owner, String sharedUser) {
         this.id = id;
         this.name = name;
         this.description = description;
         this.location = location;
+        this.owner = owner;
+        this.sharedUser = sharedUser;
     }
 }

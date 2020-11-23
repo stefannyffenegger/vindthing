@@ -1,6 +1,8 @@
 package ch.vindthing.payload.response;
 
+import ch.vindthing.model.User;
 import ch.vindthing.payload.StorePayload;
+import java.util.Set;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -14,9 +16,10 @@ public class StoreResponse implements StorePayload {
     private final String created;
     private String lastedit;
     private String owner;
+    private Set<User> sharedUsers;
 
     public StoreResponse(String id, String name, String description, String location, String created, String lastedit,
-                         String owner) {
+                         String owner, Set<User> sharedUsers) {
         this.id = id;
         this.name = name;
         this.description = description;
@@ -24,5 +27,6 @@ public class StoreResponse implements StorePayload {
         this.created = created;
         this.lastedit = lastedit;
         this.owner = owner;
+        this.sharedUsers = sharedUsers;
     }
 }

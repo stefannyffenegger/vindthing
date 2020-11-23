@@ -72,29 +72,25 @@ public class JwtUtils {
 	}
 
 	/**
-	 *
-	 * @param token
-	 * @param store
-	 * @return
+	 * Checks if the current User is the owner of the Store
+	 * @param token JWT token
+	 * @param store Store
+	 * @return True if permitted
 	 */
 	public boolean checkPermissionOwner(String token, Store store){
 		User user = getUserFromJwtToken(token);
-		// Usercheck
-		if(store.getOwner().getId().equals(user.getId())){
-			return true;
-		}
-		return false;
+		return store.getOwner().getId().equals(user.getId());
 	}
 
 	/**
-	 *
-	 * @param token
-	 * @param store
-	 * @return
+	 * Checks if the current User is permitted for the Store
+	 * @param token JWT token
+	 * @param store Store
+	 * @return True if permitted
 	 */
 	public boolean checkPermissionSharedUsers(String token, Store store){
 		User user = getUserFromJwtToken(token);
-		return true;
+		return store.getSharedUsers().stream().anyMatch(users -> user.getId().equals(users.getId()));
 	}
 
 	/**
