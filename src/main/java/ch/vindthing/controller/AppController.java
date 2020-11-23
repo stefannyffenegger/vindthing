@@ -312,9 +312,7 @@ public class AppController {
     @PreAuthorize("hasRole('USER') or hasRole('MODERATOR') or hasRole('ADMIN')")
     public ResponseEntity<?> getAllStores(@RequestHeader (name="Authorization") String token) {
         User user = jwtUtils.getUserFromJwtToken(token);
-
         Query query = new Query(Criteria.where("sharedUsers._id").is(user.getId()));
-
         List<Store> stores = mongoTemplate.find(query, Store.class);
         for (Store store: stores) {
             store.getOwner().setId(null);
@@ -325,9 +323,52 @@ public class AppController {
                 fuser.setId(null);
                 fuser.setRoles(null);
             }
-
         }
 
         return ResponseEntity.ok(stores);
+    }
+
+    /**
+     * Deletes a store if correct ID is provided
+     * Only the owner can delete a Store
+     * @param storeUpdateRequest Request
+     * @return Status Response
+     */
+    @RequestMapping("/user/add")
+    @PreAuthorize("hasRole('USER') or hasRole('MODERATOR') or hasRole('ADMIN')")
+    public ResponseEntity<?> addUserToStore(@Valid @RequestHeader (name="Authorization") String token,
+                                         @RequestBody() StoreUpdateRequest storeUpdateRequest) {
+        //
+
+        Store store = storeRepository.findById(storeUpdateRequest.getId())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                        "Store Delete: Store ID not found: " + storeUpdateRequest.getId()));
+        // Usercheck
+        if(!jwtUtils.checkPermissionOwner(token, store)){
+            return ResponseEntity.badRequest().body("Store Delete: Only owners can delete a Store!");
+        }
+        storeRepository.delete(store);
+        return ResponseEntity.ok(new MessageResponse("Store deleted!"));
+    }
+
+    /**
+     * Deletes a store if correct ID is provided
+     * Only the owner can delete a Store
+     * @param storeUpdateRequest Request
+     * @return Status Response
+     */
+    @RequestMapping("/user/delete")
+    @PreAuthorize("hasRole('USER') or hasRole('MODERATOR') or hasRole('ADMIN')")
+    public ResponseEntity<?> deleteUserFromStore(@Valid @RequestHeader (name="Authorization") String token,
+                                            @RequestBody() StoreUpdateRequest storeUpdateRequest) {
+        Store store = storeRepository.findById(storeUpdateRequest.getId())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                        "Store Delete: Store ID not found: " + storeUpdateRequest.getId()));
+        // Usercheck
+        if(!jwtUtils.checkPermissionOwner(token, store)){
+            return ResponseEntity.badRequest().body("Store Delete: Only owners can delete a Store!");
+        }
+        storeRepository.delete(store);
+        return ResponseEntity.ok(new MessageResponse("Store deleted!"));
     }
 }
