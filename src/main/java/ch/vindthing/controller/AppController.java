@@ -314,17 +314,22 @@ public class AppController {
         User user = jwtUtils.getUserFromJwtToken(token);
 
         Query query = new Query(Criteria.where("sharedUsers._id").is(user.getId()));
-        // query.fields().exclude("owner");
+        // query.fields().exclude("sharedUsers");
 
-        ProjectionOperation projectionOperation = Aggregation.project().andExclude("owner.password");
-        MatchOperation match = Aggregation.match(Criteria.where("owner._id").is(new ObjectId(user.getId())));
+        List<Store> stores = mongoTemplate.find(query, Store.class);
+        // stores.forEach(fifi -> fifi.getOwner().setPassword("null"));
+        for (Store store: stores) {
+            store.getOwner().setId(null);
+            store.getOwner().setPassword(null);
+            store.getOwner().setRoles(null);
+            for (User fuser: store.getSharedUsers()) {
+                fuser.setPassword(null);
+                fuser.setId(null);
+                fuser.setRoles(null);
+            }
 
-        Aggregation aggregation = Aggregation.newAggregation(projectionOperation);
-        AggregationResults<Store> results = mongoTemplate.aggregate(aggregation, "stores", Store.class);
-        List<Store> store = results.getMappedResults();
+        }
 
-        // List<Store> store = mongoTemplate.find(query, Store.class);
-
-        return ResponseEntity.ok(store);
+        return ResponseEntity.ok(stores);
     }
 }
