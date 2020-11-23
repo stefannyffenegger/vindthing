@@ -314,10 +314,8 @@ public class AppController {
         User user = jwtUtils.getUserFromJwtToken(token);
 
         Query query = new Query(Criteria.where("sharedUsers._id").is(user.getId()));
-        // query.fields().exclude("sharedUsers");
 
         List<Store> stores = mongoTemplate.find(query, Store.class);
-        // stores.forEach(fifi -> fifi.getOwner().setPassword("null"));
         for (Store store: stores) {
             store.getOwner().setId(null);
             store.getOwner().setPassword(null);
