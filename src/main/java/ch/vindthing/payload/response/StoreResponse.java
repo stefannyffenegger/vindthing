@@ -1,6 +1,8 @@
 package ch.vindthing.payload.response;
 
 import ch.vindthing.model.User;
+
+import java.util.ArrayList;
 import java.util.Set;
 import lombok.Getter;
 import lombok.Setter;
@@ -15,10 +17,10 @@ public class StoreResponse {
     private final String created;
     private String lastedit;
     private String owner;
-    private Set<User> sharedUsers;
+    private ArrayList<User> sharedUsers;
 
     public StoreResponse(String id, String name, String description, String location, String created, String lastedit,
-                         String owner, Set<User> sharedUsers) {
+                         String owner, ArrayList<User> sharedUsers) {
         this.id = id;
         this.name = name;
         this.description = description;

@@ -257,19 +257,6 @@ public class AppController {
         if(storeUpdateRequest.getLocation()!=null && !storeUpdateRequest.getLocation().equals("")){
             store.setLocation(storeUpdateRequest.getLocation());
         }
-        if(storeUpdateRequest.getOwner()!=null && !storeUpdateRequest.getOwner().equals("")){
-            User newOwner = userRepository.findByEmail(storeUpdateRequest.getOwner()).orElseThrow(() ->
-                    new ResponseStatusException(HttpStatus.NOT_FOUND,
-                            "Store Update: User not found: " + storeUpdateRequest.getOwner()));;
-            store.setOwner(newOwner);
-            store.getSharedUsers().add(newOwner);
-        }
-        if(storeUpdateRequest.getSharedUser()!=null && !storeUpdateRequest.getSharedUser().equals("")){
-            User newUser = userRepository.findByEmail(storeUpdateRequest.getSharedUser()).orElseThrow(() ->
-                    new ResponseStatusException(HttpStatus.NOT_FOUND,
-                            "Store Update: User not found: " + storeUpdateRequest.getSharedUser()));;
-            store.getSharedUsers().add(newUser);
-        }
         store.setLastEdit(StringUtils.getCurrentTimeStamp()); // Update last edit
         storeRepository.save(store); // Update store
         return ResponseEntity.ok(new StoreResponse(store.getId(), store.getName(), store.getDescription(),
@@ -344,14 +331,26 @@ public class AppController {
             User newOwner = userRepository.findByEmail(userAddRequest.getOwner()).orElseThrow(() ->
                     new ResponseStatusException(HttpStatus.NOT_FOUND,
                             "Store Add User: User not found: " + userAddRequest.getOwner()));
-            store.setOwner(newOwner);
-            store.getSharedUsers().add(newOwner);
+            System.out.println("Owner update "+!newOwner.getEmail().equals(userAddRequest.getOwner()));
+            System.out.println(store.getOwner().getEmail());
+            System.out.println(userAddRequest.getOwner());
+
+            if(!store.getOwner().getEmail().equals(userAddRequest.getOwner())){
+                store.setOwner(newOwner);
+                if(store.getSharedUsers().stream().noneMatch(bob -> bob.getEmail().equals(userAddRequest
+                        .getSharedUser()))){
+                    store.getSharedUsers().add(newOwner);
+                }
+            }
         }
         if(userAddRequest.getSharedUser()!=null && !userAddRequest.getSharedUser().equals("")){
             User newUser = userRepository.findByEmail(userAddRequest.getSharedUser()).orElseThrow(() ->
                     new ResponseStatusException(HttpStatus.NOT_FOUND,
                             "Store Add User: User not found: " + userAddRequest.getSharedUser()));
-            store.getSharedUsers().add(newUser);
+            if(store.getSharedUsers().stream().noneMatch(bob -> bob.getEmail().equals(userAddRequest
+                    .getSharedUser()))){
+                store.getSharedUsers().add(newUser);
+            }
         }
         store.setLastEdit(StringUtils.getCurrentTimeStamp()); // Update last edit
         storeRepository.save(store); // Update store
@@ -381,7 +380,7 @@ public class AppController {
             User user = userRepository.findByEmail(userRemoveRequest.getSharedUser()).orElseThrow(() ->
                     new ResponseStatusException(HttpStatus.NOT_FOUND,
                             "Store Remove User: User not found: " + userRemoveRequest.getSharedUser()));
-            store.getSharedUsers().remove(user);
+            store.getSharedUsers().removeIf(buzz -> buzz.getEmail().equals(userRemoveRequest.getSharedUser()));
         }
         store.setLastEdit(StringUtils.getCurrentTimeStamp()); // Update last edit
         storeRepository.save(store);

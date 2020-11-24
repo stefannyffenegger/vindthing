@@ -30,11 +30,12 @@ public class Store {
 
     private ArrayList<Item> items = new ArrayList<>();
 
+    @NotBlank
     @DBRef
     private User owner;
 
     @DBRef
-    private Set<User> sharedUsers = new HashSet<>();
+    private ArrayList<User> sharedUsers = new ArrayList<>();
 
     private String created;
 
@@ -102,11 +103,11 @@ public class Store {
 
     public void setOwner(User owner) { this.owner = owner; }
 
-    public Set<User> getSharedUsers() {
+    public ArrayList<User> getSharedUsers() {
         return sharedUsers;
     }
 
-    public void setSharedUsers(Set<User> user) {
+    public void setSharedUsers(ArrayList<User> user) {
         this.sharedUsers = user;
     }
 
