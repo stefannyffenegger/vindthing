@@ -32,6 +32,8 @@ public class User {
   @DBRef
   private Set<Role> roles = new HashSet<>();
 
+  private boolean isEnabled;
+
   public User() {
   }
 
@@ -79,6 +81,14 @@ public class User {
 
   public void setRoles(Set<Role> roles) {
     this.roles = roles;
+  }
+
+  public boolean isEnabled() {
+    return isEnabled;
+  }
+
+  public void setEnabled(boolean enabled) {
+    isEnabled = enabled;
   }
 
   @Override
