@@ -1,12 +1,11 @@
 package ch.vindthing.payload.response;
 
-import ch.vindthing.payload.ItemPayload;
 import lombok.Getter;
 import lombok.Setter;
 
 @Getter
 @Setter
-public class ItemResponse implements ItemPayload {
+public class ItemResponse {
     private String id;
     private String name;
     private String description;

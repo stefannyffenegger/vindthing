@@ -1,14 +1,12 @@
 package ch.vindthing.payload.request;
 
-import ch.vindthing.payload.StorePayload;
-
 import javax.validation.constraints.NotBlank;
 import lombok.Getter;
 import lombok.Setter;
 
 @Getter
 @Setter
-public class StoreUpdateRequest implements StorePayload {
+public class StoreUpdateRequest {
     @NotBlank
     private String id;
     private String name;

@@ -6,12 +6,11 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import javax.validation.Valid;
 
+import ch.vindthing.payload.request.ProfileUpdateRequest;
 import ch.vindthing.payload.response.UserResponse;
 import ch.vindthing.repository.RoleRepository;
 import ch.vindthing.repository.UserRepository;
-import ch.vindthing.security.jwt.AuthTokenFilter;
 import ch.vindthing.security.jwt.JwtUtils;
-import ch.vindthing.service.UserDetailsImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -19,9 +18,7 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 import ch.vindthing.model.ERole;
 import ch.vindthing.model.Role;
@@ -69,10 +66,10 @@ public class AuthController {
         SecurityContextHolder.getContext().setAuthentication(authentication);
         String jwt = jwtUtils.generateJwtToken(authentication);
 
-        UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
+        /*UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
         List<String> roles = userDetails.getAuthorities().stream()
                 .map(item -> item.getAuthority())
-                .collect(Collectors.toList());
+                .collect(Collectors.toList());*/
 
         return ResponseEntity.ok(new JwtResponse(jwt));
     }
@@ -149,6 +146,37 @@ public class AuthController {
         }else{
             return ResponseEntity.badRequest().body("couldn't find profile");
         }
+    }
+
+    /**
+     * Update user profile
+     * @param token JWT token
+     * @param profileUpdateRequest Update Request
+     * @return Response
+     */
+    @PutMapping("/profile/update")
+    @PreAuthorize("hasRole('USER') or hasRole('MODERATOR') or hasRole('ADMIN')")
+    public ResponseEntity<?> updateUserProfile(@Valid @RequestHeader (name="Authorization") String token,
+                                               @RequestBody ProfileUpdateRequest profileUpdateRequest) {
+        User user = jwtUtils.getUserFromJwtToken(token);
+
+        if(profileUpdateRequest.getEmail() != null && !profileUpdateRequest.getEmail().equals("")){
+            if (userRepository.existsByEmail(profileUpdateRequest.getEmail())) {
+                return ResponseEntity.badRequest().body(new MessageResponse("Error: Email is already in use!"));
+            }
+            user.setEmail(profileUpdateRequest.getEmail());
+        }
+        if(profileUpdateRequest.getPassword() != null && !profileUpdateRequest.getPassword().equals("")){
+            user.setPassword(encoder.encode(profileUpdateRequest.getPassword()));
+        }
+        if(profileUpdateRequest.getName() != null && !profileUpdateRequest.getName().equals("")){
+            user.setName(profileUpdateRequest.getName());
+        }
+
+        // Update User
+        userRepository.save(user);
+
+        return ResponseEntity.ok(new MessageResponse("User updated successfully!"));
     }
 
     @PostMapping("/profile/imageupload")

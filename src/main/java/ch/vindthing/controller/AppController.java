@@ -11,12 +11,7 @@ import ch.vindthing.repository.StoreRepository;
 import ch.vindthing.repository.UserRepository;
 import ch.vindthing.security.jwt.JwtUtils;
 import ch.vindthing.util.StringUtils;
-import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.mongodb.core.aggregation.Aggregation;
-import org.springframework.data.mongodb.core.aggregation.AggregationResults;
-import org.springframework.data.mongodb.core.aggregation.MatchOperation;
-import org.springframework.data.mongodb.core.aggregation.ProjectionOperation;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.MongoTemplate;
@@ -329,46 +324,69 @@ public class AppController {
     }
 
     /**
-     * Deletes a store if correct ID is provided
-     * Only the owner can delete a Store
-     * @param storeUpdateRequest Request
+     * Adds Users to Stores
+     * Only the owner can update a Store
+     * @param userAddRequest Request
      * @return Status Response
      */
-    @RequestMapping("/user/add")
+    @RequestMapping("/store/user/add")
     @PreAuthorize("hasRole('USER') or hasRole('MODERATOR') or hasRole('ADMIN')")
     public ResponseEntity<?> addUserToStore(@Valid @RequestHeader (name="Authorization") String token,
-                                         @RequestBody() StoreUpdateRequest storeUpdateRequest) {
-        //
-
-        Store store = storeRepository.findById(storeUpdateRequest.getId())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
-                        "Store Delete: Store ID not found: " + storeUpdateRequest.getId()));
+                                         @RequestBody() UserAddRequest userAddRequest) {
+        Store store = storeRepository.findById(userAddRequest.getStoreId()).orElseThrow(() ->
+                new ResponseStatusException(HttpStatus.NOT_FOUND,
+                        "Store Add User: Store ID not found: " + userAddRequest.getStoreId()));
         // Usercheck
         if(!jwtUtils.checkPermissionOwner(token, store)){
-            return ResponseEntity.badRequest().body("Store Delete: Only owners can delete a Store!");
+            return ResponseEntity.badRequest().body("Store Add User: Only owners can update a Store!");
         }
-        storeRepository.delete(store);
-        return ResponseEntity.ok(new MessageResponse("Store deleted!"));
+        if(userAddRequest.getOwner()!=null && !userAddRequest.getOwner().equals("")){
+            User newOwner = userRepository.findByEmail(userAddRequest.getOwner()).orElseThrow(() ->
+                    new ResponseStatusException(HttpStatus.NOT_FOUND,
+                            "Store Add User: User not found: " + userAddRequest.getOwner()));
+            store.setOwner(newOwner);
+            store.getSharedUsers().add(newOwner);
+        }
+        if(userAddRequest.getSharedUser()!=null && !userAddRequest.getSharedUser().equals("")){
+            User newUser = userRepository.findByEmail(userAddRequest.getSharedUser()).orElseThrow(() ->
+                    new ResponseStatusException(HttpStatus.NOT_FOUND,
+                            "Store Add User: User not found: " + userAddRequest.getSharedUser()));
+            store.getSharedUsers().add(newUser);
+        }
+        store.setLastEdit(StringUtils.getCurrentTimeStamp()); // Update last edit
+        storeRepository.save(store); // Update store
+        return ResponseEntity.ok(new StoreResponse(store.getId(), store.getName(), store.getDescription(),
+                store.getLocation(), store.getCreated(), store.getLastEdit(), store.getOwner().toString(),
+                store.getSharedUsers()));
     }
 
     /**
-     * Deletes a store if correct ID is provided
-     * Only the owner can delete a Store
-     * @param storeUpdateRequest Request
+     * Removes Users from Stores
+     * Only the owner can update a Store
+     * @param userRemoveRequest Request
      * @return Status Response
      */
-    @RequestMapping("/user/delete")
+    @RequestMapping("/store/user/remove")
     @PreAuthorize("hasRole('USER') or hasRole('MODERATOR') or hasRole('ADMIN')")
-    public ResponseEntity<?> deleteUserFromStore(@Valid @RequestHeader (name="Authorization") String token,
-                                            @RequestBody() StoreUpdateRequest storeUpdateRequest) {
-        Store store = storeRepository.findById(storeUpdateRequest.getId())
+    public ResponseEntity<?> removeUserFromStore(@Valid @RequestHeader (name="Authorization") String token,
+                                            @RequestBody() UserRemoveRequest userRemoveRequest) {
+        Store store = storeRepository.findById(userRemoveRequest.getStoreId())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
-                        "Store Delete: Store ID not found: " + storeUpdateRequest.getId()));
+                        "Store Remove User: Store ID not found: " + userRemoveRequest.getStoreId()));
         // Usercheck
         if(!jwtUtils.checkPermissionOwner(token, store)){
-            return ResponseEntity.badRequest().body("Store Delete: Only owners can delete a Store!");
+            return ResponseEntity.badRequest().body("Store Remove User: Only owners can delete a Store!");
         }
-        storeRepository.delete(store);
-        return ResponseEntity.ok(new MessageResponse("Store deleted!"));
+        if(userRemoveRequest.getSharedUser() != null && !userRemoveRequest.getSharedUser().equals("")){
+            User user = userRepository.findByEmail(userRemoveRequest.getSharedUser()).orElseThrow(() ->
+                    new ResponseStatusException(HttpStatus.NOT_FOUND,
+                            "Store Remove User: User not found: " + userRemoveRequest.getSharedUser()));
+            store.getSharedUsers().remove(user);
+        }
+        store.setLastEdit(StringUtils.getCurrentTimeStamp()); // Update last edit
+        storeRepository.save(store);
+        return ResponseEntity.ok(new StoreResponse(store.getId(), store.getName(), store.getDescription(),
+                store.getLocation(), store.getCreated(), store.getLastEdit(), store.getOwner().toString(),
+                store.getSharedUsers()));
     }
 }

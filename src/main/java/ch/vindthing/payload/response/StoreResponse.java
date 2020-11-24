@@ -1,20 +1,17 @@
 package ch.vindthing.payload.response;
 
-import ch.vindthing.model.Item;
 import ch.vindthing.model.User;
-import ch.vindthing.payload.StorePayload;
 import java.util.Set;
 import lombok.Getter;
 import lombok.Setter;
 
 @Getter
 @Setter
-public class StoreResponse implements StorePayload {
+public class StoreResponse {
     private String id;
     private String name;
     private String description;
     private String location;
-    private Item items;
     private final String created;
     private String lastedit;
     private String owner;
