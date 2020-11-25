@@ -20,7 +20,7 @@ public class Item {
 
     private int quantity;
 
-    private String imageUrl;
+    private String imageId;
 
     private String created;
 
@@ -75,12 +75,12 @@ public class Item {
         this.quantity = quantity;
     }
 
-    public String getImageUrl() {
-        return imageUrl;
+    public String getImageId() {
+        return imageId;
     }
 
-    public void setImageUrl(String imageUrl) {
-        this.imageUrl = imageUrl;
+    public void setImageId(String imageId) {
+        this.imageId = imageId;
     }
 
     public String getCreated() {

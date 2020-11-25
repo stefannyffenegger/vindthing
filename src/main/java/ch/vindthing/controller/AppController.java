@@ -10,20 +10,30 @@ import ch.vindthing.payload.response.StoreResponse;
 import ch.vindthing.repository.StoreRepository;
 import ch.vindthing.repository.UserRepository;
 import ch.vindthing.security.jwt.JwtUtils;
+import ch.vindthing.service.ImageStoreService;
 import ch.vindthing.util.StringUtils;
+import com.mongodb.client.gridfs.model.GridFSFile;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.InputStreamResource;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Update;
+import org.springframework.data.mongodb.gridfs.GridFsResource;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import javax.validation.Valid;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.List;
 
 
@@ -45,6 +55,8 @@ public class AppController {
 
     @Autowired
     JwtUtils jwtUtils;
+
+    ImageStoreService imageStoreService;
 
     /**
      * Add an Item to a Store
@@ -387,5 +399,73 @@ public class AppController {
         return ResponseEntity.ok(new StoreResponse(store.getId(), store.getName(), store.getDescription(),
                 store.getLocation(), store.getCreated(), store.getLastEdit(), store.getOwner().toString(),
                 store.getSharedUsers()));
+    }
+
+    /**
+     *
+     * @return
+     */
+    @PostMapping("/image/add")
+    @PreAuthorize("hasRole('USER') or hasRole('MODERATOR') or hasRole('ADMIN')")
+    public ResponseEntity<?> uploadImage(@RequestParam("id") String id,
+                                         @RequestParam("type") String type,
+                                         @RequestParam("file") MultipartFile file) throws IOException {
+
+        //todo everything here O.O
+
+        imageStoreService = new ImageStoreService();
+        System.out.println("hallo vorher: "+ file.getOriginalFilename());
+        String imageId = imageStoreService.addImage(file);
+        switch (type){
+            case "item":
+                // Find Store and Item by Item ID
+                Query query = new Query(Criteria.where("items._id").is(id));
+                query.fields().include("items.$"); //todo .include("sharedUsers");
+                Query findQuery = query;
+                findQuery.fields().include("items.$");
+
+                Update update = new Update();
+                if(imageId!=null && !imageId.equals("")){
+                    update.set("items.$.imageId", imageId);
+                }
+
+                Item newItem;
+                try{
+                    mongoTemplate.updateFirst(query, update, Store.class);
+                    newItem = mongoTemplate.findOne(findQuery, Store.class).getItems().get(0);
+                    return ResponseEntity.ok(new ItemResponse(newItem.getId(), newItem.getName(), newItem.getDescription(),
+                            newItem.getQuantity(), newItem.getCreated(), newItem.getLastedit()));
+                }catch (Exception e) {
+                    return ResponseEntity.badRequest().body("Item Update Failed for ID: " + id
+                            + " Exception: " + e);
+                }
+            case "store":
+                //todo la meme chause
+                break;
+            default:
+                return ResponseEntity.badRequest().body("Wrong image parameters!");
+        }
+        return ResponseEntity.ok(new MessageResponse("Image uploaded!"));
+    }
+
+    /**
+     *
+     * @return
+     */
+    @GetMapping("image/get/{id}")
+    @PreAuthorize("hasRole('USER') or hasRole('MODERATOR') or hasRole('ADMIN')")
+    public ResponseEntity<?> downloadImage(@PathVariable String id) {
+        GridFsResource image;
+        try {
+            image = imageStoreService.getImage(id);
+            return ResponseEntity.ok()
+                    .contentLength(image.getFile().length())
+                    .contentType(MediaType.parseMediaType(image.getContentType()))
+                    .body(new InputStreamResource(image.getInputStream()));
+
+        } catch (IllegalStateException | IOException e) {
+            return ResponseEntity.badRequest().body("Cannot get image");
+        }
+
     }
 }

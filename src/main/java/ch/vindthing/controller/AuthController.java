@@ -268,12 +268,4 @@ public class AuthController {
 
         return ResponseEntity.ok(new MessageResponse("User updated successfully!"));
     }
-
-    @PostMapping("/profile/imageupload")
-    @PreAuthorize("hasRole('USER') or hasRole('MODERATOR') or hasRole('ADMIN')")
-    public ResponseEntity<?> uploadUserProfileImage(@RequestParam("file") MultipartFile file,
-                                                    RedirectAttributes redirectAttributes) {
-
-        return ResponseEntity.ok(new MessageResponse("Image uploaded!"));
-    }
 }
