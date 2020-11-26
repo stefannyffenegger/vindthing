@@ -12,6 +12,7 @@ import ch.vindthing.repository.UserRepository;
 import ch.vindthing.security.jwt.JwtUtils;
 import ch.vindthing.service.ImageStoreService;
 import ch.vindthing.util.StringUtils;
+import com.mongodb.client.gridfs.GridFSDownloadStream;
 import com.mongodb.client.gridfs.model.GridFSFile;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.InputStreamResource;
@@ -19,6 +20,7 @@ import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Update;
+import org.springframework.data.mongodb.gridfs.GridFsOperations;
 import org.springframework.data.mongodb.gridfs.GridFsResource;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -56,7 +58,7 @@ public class AppController {
     @Autowired
     JwtUtils jwtUtils;
 
-    ImageStoreService imageStoreService;
+    ImageStoreService imageStoreService = new ImageStoreService();
 
     /**
      * Add an Item to a Store
@@ -413,8 +415,6 @@ public class AppController {
 
         //todo everything here O.O
 
-        imageStoreService = new ImageStoreService();
-        System.out.println("hallo vorher: "+ file.getOriginalFilename());
         String imageId = imageStoreService.addImage(file);
         switch (type){
             case "item":
@@ -455,13 +455,13 @@ public class AppController {
     @GetMapping("image/get/{id}")
     @PreAuthorize("hasRole('USER') or hasRole('MODERATOR') or hasRole('ADMIN')")
     public ResponseEntity<?> downloadImage(@PathVariable String id) {
-        GridFsResource image;
+
         try {
-            image = imageStoreService.getImage(id);
+            GridFSDownloadStream image = imageStoreService.getImage(id);
             return ResponseEntity.ok()
-                    .contentLength(image.getFile().length())
-                    .contentType(MediaType.parseMediaType(image.getContentType()))
-                    .body(new InputStreamResource(image.getInputStream()));
+                    .contentLength(image.getGridFSFile().getLength())
+                    .contentType(MediaType.parseMediaType(image.getGridFSFile().getMetadata().getString("type")))
+                    .body(new InputStreamResource(image));
 
         } catch (IllegalStateException | IOException e) {
             return ResponseEntity.badRequest().body("Cannot get image");

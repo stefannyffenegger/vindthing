@@ -1,43 +1,50 @@
 package ch.vindthing.service;
 
-import com.mongodb.BasicDBObject;
-import com.mongodb.DBObject;
-import com.mongodb.client.gridfs.model.GridFSFile;
-import com.mongodb.gridfs.GridFS;
+import com.mongodb.MongoClient;
+import com.mongodb.client.MongoDatabase;
+import com.mongodb.client.gridfs.GridFSBucket;
+import com.mongodb.client.gridfs.GridFSBuckets;
+import com.mongodb.client.gridfs.GridFSDownloadStream;
+import com.mongodb.client.gridfs.model.GridFSUploadOptions;
+import org.bson.Document;
 import org.bson.types.ObjectId;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.mongodb.core.MongoTemplate;
-import org.springframework.data.mongodb.core.query.Criteria;
-import org.springframework.data.mongodb.core.query.Query;
-import org.springframework.data.mongodb.gridfs.GridFsOperations;
-import org.springframework.data.mongodb.gridfs.GridFsResource;
-import org.springframework.data.mongodb.gridfs.GridFsTemplate;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 
 public class ImageStoreService {
-    @Autowired
-    private GridFsTemplate gridFsTemplate;
 
-    @Autowired
-    private GridFsOperations operations;
+    @Value("vindthing-store")
+    private String gridDatabase = "vindthing-store";
 
-    public String addImage(MultipartFile file) throws IOException {
-        System.out.println("hallo: "+ file.getName());
-        DBObject metaData = new BasicDBObject();
-        System.out.println("hallo 1: "+ file.getName());
-        metaData.put("type", "image");
-        System.out.println("hallo 1.2: ");
-        ObjectId id = gridFsTemplate.store(
-                file.getInputStream(), file.getName(), file.getContentType(), metaData);
-        System.out.println("hallo 2: "+ file.getName());
-        return id.toString();
+    @Value("localhost")
+    private String mongoHost;
+
+    MongoClient mongoClient = new MongoClient(mongoHost);;
+    MongoDatabase mongoDatabase = mongoClient.getDatabase(gridDatabase);
+
+    public GridFSBucket getGridFSBucket(){
+        return GridFSBuckets.create(mongoDatabase);
     }
 
-    public GridFsResource getImage(String id) throws IllegalStateException, IOException {
-        GridFSFile file = gridFsTemplate.findOne(new Query(Criteria.where("_id").is(id)));
-        GridFsResource resource = gridFsTemplate.getResource(file.getFilename());
-        return resource;
+    public String addImage(MultipartFile file) throws IOException {
+
+        GridFSBucket bucket = getGridFSBucket();
+
+        GridFSUploadOptions uploadOptions = new GridFSUploadOptions();
+        uploadOptions.metadata(new Document("type", file.getContentType()));
+
+        ObjectId fileId = bucket.uploadFromStream(file.getName(), file.getInputStream(),uploadOptions);
+
+        return fileId.toString();
+    }
+
+    public GridFSDownloadStream getImage(String id) throws IllegalStateException, IOException {
+
+        GridFSBucket bucket = getGridFSBucket();
+        GridFSDownloadStream stream = bucket.openDownloadStream(new ObjectId(id));
+
+        return stream;
     }
 }
