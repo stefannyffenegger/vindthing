@@ -21,7 +21,7 @@ Finds your things!
 #### Frontend
 - Run nuxt.js (vindthing-ui):
 - In PowerShell ```cd``` to project folder
-- Run with ```npm run dev```
+- Run with ```npm run``` or with ```npm run dev``` for dev mode
 - Website available at http://localhost:3000
 
 ## Run Spring Boot application
