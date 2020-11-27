@@ -1,7 +1,7 @@
 package ch.vindthing.controller;
 
+import ch.vindthing.model.EResponse;
 import ch.vindthing.model.Item;
-import ch.vindthing.model.Store;
 import ch.vindthing.model.User;
 import ch.vindthing.payload.request.*;
 import ch.vindthing.payload.response.ImageResponse;
@@ -12,14 +12,8 @@ import ch.vindthing.repository.StoreRepository;
 import ch.vindthing.repository.UserRepository;
 import ch.vindthing.security.jwt.JwtUtils;
 import ch.vindthing.util.StringUtils;
-import com.mongodb.BasicDBObject;
-import com.mongodb.DBObject;
 import com.mongodb.client.gridfs.GridFSBucket;
 import com.mongodb.client.gridfs.GridFSDownloadStream;
-import com.mongodb.client.gridfs.GridFSFindIterable;
-import com.mongodb.client.gridfs.model.GridFSFile;
-
-import com.mongodb.client.gridfs.model.GridFSUploadOptions;
 import org.bson.Document;
 import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,9 +22,6 @@ import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Update;
-import org.springframework.data.mongodb.gridfs.GridFsCriteria;
-import org.springframework.data.mongodb.gridfs.GridFsOperations;
-import org.springframework.data.mongodb.gridfs.GridFsResource;
 import org.springframework.data.mongodb.gridfs.GridFsTemplate;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -67,9 +58,6 @@ public class AppController {
     private GridFsTemplate gridFsTemplate;
 
     @Autowired
-    private GridFsOperations operations;
-
-    @Autowired
     private GridFSBucket gridFSBucket;
 
     @Autowired
@@ -85,7 +73,7 @@ public class AppController {
     public ResponseEntity<?> addItemToStore(@Valid @RequestHeader (name="Authorization") String token,
                                             @RequestBody() ItemAddRequest itemAddRequest) {
         // Check if store exists
-        Store store = storeRepository.findById(itemAddRequest.getStoreId()).
+        ch.vindthing.model.Store store = storeRepository.findById(itemAddRequest.getStoreId()).
                 orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
                         "Item Add: Store ID not found: " + itemAddRequest.getStoreId()));
 
@@ -98,7 +86,7 @@ public class AppController {
         store.getItems().add(item);
         storeRepository.save(store); // Update Store
         return ResponseEntity.status(HttpStatus.CREATED).body(new ItemResponse(item.getId(), item.getName(),
-                item.getDescription(), item.getQuantity(), item.getCreated(), item.getLastedit()));
+                item.getDescription(), item.getQuantity(), item.getCreated(), item.getLastedit(), item.getImageId()));
     }
 
     /**
@@ -113,7 +101,7 @@ public class AppController {
         // Find Store by Item ID
         Query query = new Query(Criteria.where("items._id").is(itemUpdateRequest.getId()));
         try {
-            Store store = mongoTemplate.findOne(query, Store.class);
+            ch.vindthing.model.Store store = mongoTemplate.findOne(query, ch.vindthing.model.Store.class);
             // Usercheck
             if(!jwtUtils.checkPermissionSharedUsers(token, store)){
                 return ResponseEntity.badRequest().body("Item Update: No Permission for this Store!");
@@ -143,10 +131,10 @@ public class AppController {
 
         Item newItem;
         try{
-            mongoTemplate.updateFirst(query, update, Store.class);
-            newItem = mongoTemplate.findOne(findQuery, Store.class).getItems().get(0);
+            mongoTemplate.updateFirst(query, update, ch.vindthing.model.Store.class);
+            newItem = mongoTemplate.findOne(findQuery, ch.vindthing.model.Store.class).getItems().get(0);
             return ResponseEntity.ok(new ItemResponse(newItem.getId(), newItem.getName(), newItem.getDescription(),
-                    newItem.getQuantity(), newItem.getCreated(), newItem.getLastedit()));
+                    newItem.getQuantity(), newItem.getCreated(), newItem.getLastedit(), newItem.getImageId()));
         }catch (Exception e) {
             return ResponseEntity.badRequest().body("Item Update Failed for ID: " + itemUpdateRequest.getId()
                     + " Exception: " + e);
@@ -168,10 +156,10 @@ public class AppController {
         query.fields().include("items.$").include("sharedUsers");
 
         // Find Item and current Store
-        Store store;
+        ch.vindthing.model.Store store;
         Item item;
         try{
-            store = mongoTemplate.findOne(query, Store.class);
+            store = mongoTemplate.findOne(query, ch.vindthing.model.Store.class);
             // Usercheck current Store
             if(!jwtUtils.checkPermissionSharedUsers(token, store)){
                 return ResponseEntity.badRequest().body("Item Move: No Permission for this Store!");
@@ -183,7 +171,7 @@ public class AppController {
         }
 
         // Check if store exists
-        Store newStore = storeRepository.findById(itemMoveRequest.getStoreId()).
+        ch.vindthing.model.Store newStore = storeRepository.findById(itemMoveRequest.getStoreId()).
                 orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
                         "Item Move: Store ID not found: " + itemMoveRequest.getStoreId()));
         // Usercheck new Store
@@ -202,10 +190,10 @@ public class AppController {
         deleteQuery.fields().include("items.$");
 
         Update update = new Update().pull("items", item);
-        mongoTemplate.updateFirst(deleteQuery, update, Store.class);
+        mongoTemplate.updateFirst(deleteQuery, update, ch.vindthing.model.Store.class);
 
         return ResponseEntity.ok(new ItemResponse(item.getId(), item.getName(), item.getDescription(),
-                item.getQuantity(), item.getCreated(), item.getLastedit()));
+                item.getQuantity(), item.getCreated(), item.getLastedit(), item.getImageId()));
     }
 
     /**
@@ -221,10 +209,10 @@ public class AppController {
         Query query = new Query(Criteria.where("items._id").is(itemUpdateRequest.getId()));
         query.fields().include("items.$").include("sharedUsers");
 
-        Store store;
+        ch.vindthing.model.Store store;
         Item item;
         try{
-            store = mongoTemplate.findOne(query, Store.class);
+            store = mongoTemplate.findOne(query, ch.vindthing.model.Store.class);
             // Usercheck
             if(!jwtUtils.checkPermissionSharedUsers(token, store)){
                 return ResponseEntity.badRequest().body("Item Delete: No Permission for this Store!");
@@ -237,7 +225,7 @@ public class AppController {
 
         // Delete Item
         Update update = new Update().pull("items", item);
-        mongoTemplate.updateFirst(query, update, Store.class);
+        mongoTemplate.updateFirst(query, update, ch.vindthing.model.Store.class);
         return ResponseEntity.ok(new MessageResponse("Item " + itemUpdateRequest.getId() + " successfully deleted!"));
     }
 
@@ -252,12 +240,12 @@ public class AppController {
     public ResponseEntity<?> addStore(@Valid @RequestHeader(name="Authorization") String token,
                                       @Valid @RequestBody() StoreAddRequest storeAddRequest) {
         User user = jwtUtils.getUserFromJwtToken(token);
-        Store store = new Store(storeAddRequest.getName(), storeAddRequest.getDescription(),
+        ch.vindthing.model.Store store = new ch.vindthing.model.Store(storeAddRequest.getName(), storeAddRequest.getDescription(),
                 storeAddRequest.getLocation(), user);
         storeRepository.save(store); // Save store
         return ResponseEntity.status(HttpStatus.CREATED).body(new StoreResponse(store.getId(),
                 store.getName(), store.getDescription(), store.getLocation(), store.getCreated(), store.getLastEdit(),
-                store.getOwner().toString(), store.getSharedUsers()));
+                store.getImageId(), store.getOwner().toString(), store.getSharedUsers()));
     }
 
     /**
@@ -270,7 +258,7 @@ public class AppController {
     @PreAuthorize("hasRole('USER') or hasRole('MODERATOR') or hasRole('ADMIN')")
     public ResponseEntity<?> updateStore(@Valid @RequestHeader (name="Authorization") String token,
                                          @RequestBody() StoreUpdateRequest storeUpdateRequest) {
-        Store store = storeRepository.findById(storeUpdateRequest.getId()).orElseThrow(() ->
+        ch.vindthing.model.Store store = storeRepository.findById(storeUpdateRequest.getId()).orElseThrow(() ->
                 new ResponseStatusException(HttpStatus.NOT_FOUND,
                         "Store Update: Store ID not found: " + storeUpdateRequest.getId()));
         // Usercheck
@@ -289,8 +277,8 @@ public class AppController {
         store.setLastEdit(StringUtils.getCurrentTimeStamp()); // Update last edit
         storeRepository.save(store); // Update store
         return ResponseEntity.ok(new StoreResponse(store.getId(), store.getName(), store.getDescription(),
-                store.getLocation(), store.getCreated(), store.getLastEdit(), store.getOwner().toString(),
-                store.getSharedUsers()));
+                store.getLocation(), store.getCreated(), store.getLastEdit(), store.getImageId(),
+                store.getOwner().toString(), store.getSharedUsers()));
     }
 
     /**
@@ -303,7 +291,7 @@ public class AppController {
     @PreAuthorize("hasRole('USER') or hasRole('MODERATOR') or hasRole('ADMIN')")
     public ResponseEntity<?> deleteStore(@Valid @RequestHeader (name="Authorization") String token,
                                          @RequestBody() StoreUpdateRequest storeUpdateRequest) {
-        Store store = storeRepository.findById(storeUpdateRequest.getId())
+        ch.vindthing.model.Store store = storeRepository.findById(storeUpdateRequest.getId())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
                         "Store Delete: Store ID not found: " + storeUpdateRequest.getId()));
         // Usercheck
@@ -324,8 +312,8 @@ public class AppController {
     public ResponseEntity<?> getAllStores(@RequestHeader (name="Authorization") String token) {
         User user = jwtUtils.getUserFromJwtToken(token);
         Query query = new Query(Criteria.where("sharedUsers._id").is(user.getId()));
-        List<Store> stores = mongoTemplate.find(query, Store.class);
-        for (Store store: stores) {
+        List<ch.vindthing.model.Store> stores = mongoTemplate.find(query, ch.vindthing.model.Store.class);
+        for (ch.vindthing.model.Store store: stores) {
             store.getOwner().setId(null);
             store.getOwner().setPassword(null);
             store.getOwner().setRoles(null);
@@ -349,7 +337,7 @@ public class AppController {
     @PreAuthorize("hasRole('USER') or hasRole('MODERATOR') or hasRole('ADMIN')")
     public ResponseEntity<?> addUserToStore(@Valid @RequestHeader (name="Authorization") String token,
                                          @RequestBody() UserAddRequest userAddRequest) {
-        Store store = storeRepository.findById(userAddRequest.getStoreId()).orElseThrow(() ->
+        ch.vindthing.model.Store store = storeRepository.findById(userAddRequest.getStoreId()).orElseThrow(() ->
                 new ResponseStatusException(HttpStatus.NOT_FOUND,
                         "Store Add User: Store ID not found: " + userAddRequest.getStoreId()));
         // Usercheck
@@ -360,9 +348,6 @@ public class AppController {
             User newOwner = userRepository.findByEmail(userAddRequest.getOwner()).orElseThrow(() ->
                     new ResponseStatusException(HttpStatus.NOT_FOUND,
                             "Store Add User: User not found: " + userAddRequest.getOwner()));
-            System.out.println("Owner update "+!newOwner.getEmail().equals(userAddRequest.getOwner()));
-            System.out.println(store.getOwner().getEmail());
-            System.out.println(userAddRequest.getOwner());
 
             if(!store.getOwner().getEmail().equals(userAddRequest.getOwner())){
                 store.setOwner(newOwner);
@@ -384,8 +369,8 @@ public class AppController {
         store.setLastEdit(StringUtils.getCurrentTimeStamp()); // Update last edit
         storeRepository.save(store); // Update store
         return ResponseEntity.ok(new StoreResponse(store.getId(), store.getName(), store.getDescription(),
-                store.getLocation(), store.getCreated(), store.getLastEdit(), store.getOwner().toString(),
-                store.getSharedUsers()));
+                store.getLocation(), store.getCreated(), store.getLastEdit(), store.getImageId(),
+                store.getOwner().toString(), store.getSharedUsers()));
     }
 
     /**
@@ -398,7 +383,7 @@ public class AppController {
     @PreAuthorize("hasRole('USER') or hasRole('MODERATOR') or hasRole('ADMIN')")
     public ResponseEntity<?> removeUserFromStore(@Valid @RequestHeader (name="Authorization") String token,
                                             @RequestBody() UserRemoveRequest userRemoveRequest) {
-        Store store = storeRepository.findById(userRemoveRequest.getStoreId())
+        ch.vindthing.model.Store store = storeRepository.findById(userRemoveRequest.getStoreId())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
                         "Store Remove User: Store ID not found: " + userRemoveRequest.getStoreId()));
         // Usercheck
@@ -414,13 +399,14 @@ public class AppController {
         store.setLastEdit(StringUtils.getCurrentTimeStamp()); // Update last edit
         storeRepository.save(store);
         return ResponseEntity.ok(new StoreResponse(store.getId(), store.getName(), store.getDescription(),
-                store.getLocation(), store.getCreated(), store.getLastEdit(), store.getOwner().toString(),
-                store.getSharedUsers()));
+                store.getLocation(), store.getCreated(), store.getLastEdit(), store.getImageId(),
+                store.getOwner().toString(), store.getSharedUsers()));
     }
 
     /**
-     *
-     * @return
+     * Upload images and associate them with a Store or Item
+     * User must be a shared user of the parent Store
+     * @return Response
      */
     @PostMapping("/image/upload")
     @PreAuthorize("hasRole('USER') or hasRole('MODERATOR') or hasRole('ADMIN')")
@@ -429,15 +415,15 @@ public class AppController {
                                       @RequestParam("type") String type,
                                       @RequestParam("file") MultipartFile file) throws IOException {
         ObjectId imageId;
+        ch.vindthing.model.Store store;
         switch (type){
             case "item":
                 // Find Store and Item by Item ID
                 Query query = new Query(Criteria.where("items._id").is(objectId));
                 query.fields().include("items.$").include("sharedUsers");
 
-                Store store;
                 try{
-                    store = mongoTemplate.findOne(query, Store.class);
+                    store = mongoTemplate.findOne(query, ch.vindthing.model.Store.class);
                     // Usercheck
                     if(!jwtUtils.checkPermissionSharedUsers(token, store)){
                         return ResponseEntity.badRequest().body("Item Delete: No Permission for this Store!");
@@ -466,12 +452,8 @@ public class AppController {
                     update.set("items.$.imageId", imageId);
                 }
 
-                Item newItem;
                 try{
-                    mongoTemplate.updateFirst(query, update, Store.class);
-
-                    // TODO: is this needed? Get item for response
-                    newItem = mongoTemplate.findOne(findQuery, Store.class).getItems().get(0);
+                    mongoTemplate.updateFirst(query, update, ch.vindthing.model.Store.class);
 
                     return ResponseEntity.ok(new ImageResponse(objectId));
                 }catch (Exception e) {
@@ -479,17 +461,36 @@ public class AppController {
                             + " Exception: " + e);
                 }
             case "store":
+                // Find Store by ID
+                store = storeRepository.findById(objectId)
+                        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                                "Store Remove User: Store ID not found: " + objectId));
+                // Usercheck
+                if(!jwtUtils.checkPermissionSharedUsers(token, store)){
+                    return ResponseEntity.badRequest().body("Store Remove User: Only owners can delete a Store!");
+                }
 
+                // todo move to separate function
+                try {
+                    InputStream inputStream = file.getInputStream();
+                    imageId = gridFsTemplate.store(inputStream, file.getOriginalFilename(),
+                            new Document("type", file.getContentType()));
+                } catch (IOException e) {
+                    throw new RuntimeException();
+                }
 
-                //todo la meme chause
+                store.setImageId(imageId.toString());
+                storeRepository.save(store);
+                return ResponseEntity.ok(new ImageResponse(imageId.toString()));
+            case "profile":
                 break;
         }
         return ResponseEntity.badRequest().body("Wrong image parameters!");
     }
 
     /**
-     *
-     * @return
+     * Download an image with the image ID
+     * @return Response
      */
     @GetMapping("image/download/{id}")
     @PreAuthorize("hasRole('USER') or hasRole('MODERATOR') or hasRole('ADMIN')")

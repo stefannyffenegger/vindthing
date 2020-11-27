@@ -16,11 +16,12 @@ public class StoreResponse {
     private String location;
     private final String created;
     private String lastedit;
+    private String imageId;
     private String owner;
     private ArrayList<User> sharedUsers;
 
     public StoreResponse(String id, String name, String description, String location, String created, String lastedit,
-                         String owner, ArrayList<User> sharedUsers) {
+                         String imageId, String owner, ArrayList<User> sharedUsers) {
         this.id = id;
         this.name = name;
         this.description = description;

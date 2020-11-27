@@ -41,6 +41,8 @@ public class Store {
 
     private String lastEdit;
 
+    private String imageId;
+
     public Store() {
     }
 
@@ -122,4 +124,8 @@ public class Store {
     public void setLastEdit(String lastEdit) {
         this.lastEdit = lastEdit;
     }
+
+    public String getImageId() { return imageId; }
+
+    public void setImageId(String imageId) { this.imageId = imageId; }
 }
