@@ -4,34 +4,42 @@ import ch.vindthing.model.Item;
 import ch.vindthing.model.Store;
 import ch.vindthing.model.User;
 import ch.vindthing.payload.request.*;
+import ch.vindthing.payload.response.ImageResponse;
 import ch.vindthing.payload.response.ItemResponse;
 import ch.vindthing.payload.response.MessageResponse;
 import ch.vindthing.payload.response.StoreResponse;
 import ch.vindthing.repository.StoreRepository;
 import ch.vindthing.repository.UserRepository;
 import ch.vindthing.security.jwt.JwtUtils;
-import ch.vindthing.service.ImageStoreService;
 import ch.vindthing.util.StringUtils;
+import com.mongodb.BasicDBObject;
+import com.mongodb.DBObject;
+import com.mongodb.client.gridfs.GridFSBucket;
 import com.mongodb.client.gridfs.GridFSDownloadStream;
+import com.mongodb.client.gridfs.GridFSFindIterable;
 import com.mongodb.client.gridfs.model.GridFSFile;
+
+import com.mongodb.client.gridfs.model.GridFSUploadOptions;
+import org.bson.Document;
+import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Update;
+import org.springframework.data.mongodb.gridfs.GridFsCriteria;
 import org.springframework.data.mongodb.gridfs.GridFsOperations;
 import org.springframework.data.mongodb.gridfs.GridFsResource;
+import org.springframework.data.mongodb.gridfs.GridFsTemplate;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
-import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import javax.validation.Valid;
 import java.io.IOException;
@@ -56,9 +64,16 @@ public class AppController {
     UserRepository userRepository;
 
     @Autowired
-    JwtUtils jwtUtils;
+    private GridFsTemplate gridFsTemplate;
 
-    ImageStoreService imageStoreService = new ImageStoreService();
+    @Autowired
+    private GridFsOperations operations;
+
+    @Autowired
+    private GridFSBucket gridFSBucket;
+
+    @Autowired
+    JwtUtils jwtUtils;
 
     /**
      * Add an Item to a Store
@@ -407,65 +422,85 @@ public class AppController {
      *
      * @return
      */
-    @PostMapping("/image/add")
+    @PostMapping("/image/upload")
     @PreAuthorize("hasRole('USER') or hasRole('MODERATOR') or hasRole('ADMIN')")
-    public ResponseEntity<?> uploadImage(@RequestParam("id") String id,
-                                         @RequestParam("type") String type,
-                                         @RequestParam("file") MultipartFile file) throws IOException {
-
-        //todo everything here O.O
-
-        String imageId = imageStoreService.addImage(file);
+    public ResponseEntity<?> uploadImage(@RequestHeader (name="Authorization") String token,
+                                         @RequestParam("objectId") String objectId,
+                                      @RequestParam("type") String type,
+                                      @RequestParam("file") MultipartFile file) throws IOException {
+        ObjectId imageId;
         switch (type){
             case "item":
                 // Find Store and Item by Item ID
-                Query query = new Query(Criteria.where("items._id").is(id));
-                query.fields().include("items.$"); //todo .include("sharedUsers");
+                Query query = new Query(Criteria.where("items._id").is(objectId));
+                query.fields().include("items.$").include("sharedUsers");
+
+                Store store;
+                try{
+                    store = mongoTemplate.findOne(query, Store.class);
+                    // Usercheck
+                    if(!jwtUtils.checkPermissionSharedUsers(token, store)){
+                        return ResponseEntity.badRequest().body("Item Delete: No Permission for this Store!");
+                    }
+                }catch (Exception e) {
+                    return ResponseEntity.badRequest().body("Item Delete: Item ID not found: " + objectId
+                            + " Exception: " + e);
+                }
+
+
+                // todo move to separate function
+                try {
+                    InputStream inputStream = file.getInputStream();
+                    imageId = gridFsTemplate.store(inputStream, file.getOriginalFilename(), new Document("type", file.getContentType()));
+                } catch (IOException e) {
+                    throw new RuntimeException();
+                }
+
+
+                // Update Item
                 Query findQuery = query;
                 findQuery.fields().include("items.$");
 
                 Update update = new Update();
-                if(imageId!=null && !imageId.equals("")){
+                if(!imageId.toString().equals("")){
                     update.set("items.$.imageId", imageId);
                 }
 
                 Item newItem;
                 try{
                     mongoTemplate.updateFirst(query, update, Store.class);
+
+                    // TODO: is this needed? Get item for response
                     newItem = mongoTemplate.findOne(findQuery, Store.class).getItems().get(0);
-                    return ResponseEntity.ok(new ItemResponse(newItem.getId(), newItem.getName(), newItem.getDescription(),
-                            newItem.getQuantity(), newItem.getCreated(), newItem.getLastedit()));
+
+                    return ResponseEntity.ok(new ImageResponse(objectId));
                 }catch (Exception e) {
-                    return ResponseEntity.badRequest().body("Item Update Failed for ID: " + id
+                    return ResponseEntity.badRequest().body("Item Update Failed for ID: " + objectId
                             + " Exception: " + e);
                 }
             case "store":
+
+
                 //todo la meme chause
                 break;
-            default:
-                return ResponseEntity.badRequest().body("Wrong image parameters!");
         }
-        return ResponseEntity.ok(new MessageResponse("Image uploaded!"));
+        return ResponseEntity.badRequest().body("Wrong image parameters!");
     }
 
     /**
      *
      * @return
      */
-    @GetMapping("image/get/{id}")
+    @GetMapping("image/download/{id}")
     @PreAuthorize("hasRole('USER') or hasRole('MODERATOR') or hasRole('ADMIN')")
-    public ResponseEntity<?> downloadImage(@PathVariable String id) {
-
-        try {
-            GridFSDownloadStream image = imageStoreService.getImage(id);
-            return ResponseEntity.ok()
-                    .contentLength(image.getGridFSFile().getLength())
-                    .contentType(MediaType.parseMediaType(image.getGridFSFile().getMetadata().getString("type")))
-                    .body(new InputStreamResource(image));
-
-        } catch (IllegalStateException | IOException e) {
-            return ResponseEntity.badRequest().body("Cannot get image");
+    public ResponseEntity<?> downloadImage(@PathVariable("id") String id) throws IOException {
+        if (id == null && !id.equals("")) {
+            return ResponseEntity.badRequest().body("Wrong image parameters!");
         }
-
+        GridFSDownloadStream gridFSDownloadStream = gridFSBucket.openDownloadStream(new ObjectId(id));
+        return ResponseEntity.ok()
+                .contentLength(gridFSDownloadStream.getGridFSFile().getLength())
+                .contentType(MediaType.parseMediaType(gridFSDownloadStream.getGridFSFile().getMetadata().getString("type")))
+                .body(new InputStreamResource(gridFSDownloadStream));
     }
 }

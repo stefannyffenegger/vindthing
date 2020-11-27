@@ -2,8 +2,6 @@ package ch.vindthing.repository;
 
 import java.util.Optional;
 
-import ch.vindthing.model.Item;
-import ch.vindthing.model.Store;
 import org.springframework.data.mongodb.repository.MongoRepository;
 
 import ch.vindthing.model.User;
