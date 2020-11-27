@@ -25,6 +25,8 @@ public class User {
   @Email
   private String email;
 
+  private String imageId;
+
   @NotBlank
   @Size(max = 120)
   private String password;
@@ -90,6 +92,10 @@ public class User {
   public void setEnabled(boolean enabled) {
     isEnabled = enabled;
   }
+
+  public String getImageId() { return imageId; }
+
+  public void setImageId(String imageId) { this.imageId = imageId; }
 
   @Override
   public String toString(){

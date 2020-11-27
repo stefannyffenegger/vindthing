@@ -2,6 +2,7 @@ package ch.vindthing.controller;
 
 import ch.vindthing.model.EResponse;
 import ch.vindthing.model.Item;
+import ch.vindthing.model.Store;
 import ch.vindthing.model.User;
 import ch.vindthing.payload.request.*;
 import ch.vindthing.payload.response.ImageResponse;
@@ -245,7 +246,7 @@ public class AppController {
         storeRepository.save(store); // Save store
         return ResponseEntity.status(HttpStatus.CREATED).body(new StoreResponse(store.getId(),
                 store.getName(), store.getDescription(), store.getLocation(), store.getCreated(), store.getLastEdit(),
-                store.getImageId(), store.getOwner().toString(), store.getSharedUsers()));
+                store.getImageId(), store.getOwner().toString(), store.getSharedUsers(), store.getItems()));
     }
 
     /**
@@ -278,7 +279,7 @@ public class AppController {
         storeRepository.save(store); // Update store
         return ResponseEntity.ok(new StoreResponse(store.getId(), store.getName(), store.getDescription(),
                 store.getLocation(), store.getCreated(), store.getLastEdit(), store.getImageId(),
-                store.getOwner().toString(), store.getSharedUsers()));
+                store.getOwner().toString(), store.getSharedUsers(), store.getItems()));
     }
 
     /**
@@ -370,7 +371,7 @@ public class AppController {
         storeRepository.save(store); // Update store
         return ResponseEntity.ok(new StoreResponse(store.getId(), store.getName(), store.getDescription(),
                 store.getLocation(), store.getCreated(), store.getLastEdit(), store.getImageId(),
-                store.getOwner().toString(), store.getSharedUsers()));
+                store.getOwner().toString(), store.getSharedUsers(), store.getItems()));
     }
 
     /**
@@ -400,7 +401,7 @@ public class AppController {
         storeRepository.save(store);
         return ResponseEntity.ok(new StoreResponse(store.getId(), store.getName(), store.getDescription(),
                 store.getLocation(), store.getCreated(), store.getLastEdit(), store.getImageId(),
-                store.getOwner().toString(), store.getSharedUsers()));
+                store.getOwner().toString(), store.getSharedUsers(), store.getItems()));
     }
 
     /**
@@ -414,8 +415,8 @@ public class AppController {
                                          @RequestParam("objectId") String objectId,
                                       @RequestParam("type") String type,
                                       @RequestParam("file") MultipartFile file) throws IOException {
-        ObjectId imageId;
-        ch.vindthing.model.Store store;
+        String imageId;
+        Store store;
         switch (type){
             case "item":
                 // Find Store and Item by Item ID
@@ -433,29 +434,21 @@ public class AppController {
                             + " Exception: " + e);
                 }
 
-
-                // todo move to separate function
-                try {
-                    InputStream inputStream = file.getInputStream();
-                    imageId = gridFsTemplate.store(inputStream, file.getOriginalFilename(), new Document("type", file.getContentType()));
-                } catch (IOException e) {
-                    throw new RuntimeException();
-                }
-
+                imageId = saveImage(file);
 
                 // Update Item
                 Query findQuery = query;
                 findQuery.fields().include("items.$");
 
                 Update update = new Update();
-                if(!imageId.toString().equals("")){
+                if(!imageId.equals("")){
                     update.set("items.$.imageId", imageId);
                 }
 
                 try{
                     mongoTemplate.updateFirst(query, update, ch.vindthing.model.Store.class);
 
-                    return ResponseEntity.ok(new ImageResponse(objectId));
+                    return ResponseEntity.ok(new ImageResponse(imageId));
                 }catch (Exception e) {
                     return ResponseEntity.badRequest().body("Item Update Failed for ID: " + objectId
                             + " Exception: " + e);
@@ -470,22 +463,34 @@ public class AppController {
                     return ResponseEntity.badRequest().body("Store Remove User: Only owners can delete a Store!");
                 }
 
-                // todo move to separate function
-                try {
-                    InputStream inputStream = file.getInputStream();
-                    imageId = gridFsTemplate.store(inputStream, file.getOriginalFilename(),
-                            new Document("type", file.getContentType()));
-                } catch (IOException e) {
-                    throw new RuntimeException();
-                }
+                imageId = saveImage(file);
 
-                store.setImageId(imageId.toString());
+                store.setImageId(imageId);
                 storeRepository.save(store);
-                return ResponseEntity.ok(new ImageResponse(imageId.toString()));
+                return ResponseEntity.ok(new ImageResponse(imageId));
             case "profile":
+
+
                 break;
         }
         return ResponseEntity.badRequest().body("Wrong image parameters!");
+    }
+
+    /**
+     * Function to save a MultipartFile image
+     * @param file Multipart image
+     * @return Image ID
+     */
+    private String saveImage(MultipartFile file){
+        ObjectId imageId;
+        try {
+            InputStream inputStream = file.getInputStream();
+            imageId = gridFsTemplate.store(inputStream, file.getOriginalFilename(),
+                    new Document("type", file.getContentType()));
+        } catch (IOException e) {
+            throw new RuntimeException();
+        }
+        return imageId.toString();
     }
 
     /**
@@ -495,7 +500,7 @@ public class AppController {
     @GetMapping("image/download/{id}")
     @PreAuthorize("hasRole('USER') or hasRole('MODERATOR') or hasRole('ADMIN')")
     public ResponseEntity<?> downloadImage(@PathVariable("id") String id) throws IOException {
-        if (id == null && !id.equals("")) {
+        if (id == null && id.equals("")) {
             return ResponseEntity.badRequest().body("Wrong image parameters!");
         }
         GridFSDownloadStream gridFSDownloadStream = gridFSBucket.openDownloadStream(new ObjectId(id));

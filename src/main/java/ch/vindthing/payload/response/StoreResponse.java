@@ -1,5 +1,6 @@
 package ch.vindthing.payload.response;
 
+import ch.vindthing.model.Item;
 import ch.vindthing.model.User;
 
 import java.util.ArrayList;
@@ -19,9 +20,10 @@ public class StoreResponse {
     private String imageId;
     private String owner;
     private ArrayList<User> sharedUsers;
+    private ArrayList<Item> items;
 
     public StoreResponse(String id, String name, String description, String location, String created, String lastedit,
-                         String imageId, String owner, ArrayList<User> sharedUsers) {
+                         String imageId, String owner, ArrayList<User> sharedUsers, ArrayList<Item> items) {
         this.id = id;
         this.name = name;
         this.description = description;
@@ -30,5 +32,6 @@ public class StoreResponse {
         this.lastedit = lastedit;
         this.owner = owner;
         this.sharedUsers = sharedUsers;
+        this.items = items;
     }
 }

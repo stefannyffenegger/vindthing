@@ -6,7 +6,6 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import javax.mail.internet.MimeMessage;
 import javax.validation.Valid;
-
 import ch.vindthing.model.ConfirmationToken;
 import ch.vindthing.payload.request.ProfileUpdateRequest;
 import ch.vindthing.payload.response.UserResponse;
@@ -19,9 +18,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.MimeMessageHelper;
-import org.springframework.messaging.MessagingException;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -36,9 +33,7 @@ import ch.vindthing.payload.request.LoginRequest;
 import ch.vindthing.payload.request.SignupRequest;
 import ch.vindthing.payload.response.JwtResponse;
 import ch.vindthing.payload.response.MessageResponse;
-import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
-import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 /**
  * Controls the /api/auth API
@@ -64,8 +59,6 @@ public class AuthController {
 
     @Autowired
     JwtUtils jwtUtils;
-
-
 
     @Autowired
     private ConfTokenRepository confirmationTokenRepository;
@@ -95,18 +88,13 @@ public class AuthController {
         SecurityContextHolder.getContext().setAuthentication(authentication);
         String jwt = jwtUtils.generateJwtToken(authentication);
 
-        /*UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
-        List<String> roles = userDetails.getAuthorities().stream()
-                .map(item -> item.getAuthority())
-                .collect(Collectors.toList());*/
-
         return ResponseEntity.ok(new JwtResponse(jwt));
     }
 
     /**
      * Signup new users
      * @param signUpRequest Request
-     * @return Respoonse
+     * @return Response
      */
     @PostMapping("/signup")
     public ResponseEntity<?> registerUser(@Valid @RequestBody SignupRequest signUpRequest) {
@@ -155,20 +143,9 @@ public class AuthController {
         user.setRoles(roles);
         userRepository.save(user);
 
-
         ConfirmationToken confirmationToken = new ConfirmationToken(user);
 
         confirmationTokenRepository.save(confirmationToken);
-
-        /*SimpleMailMessage mailMessage = new SimpleMailMessage();
-
-
-        mailMessage.setTo(user.getEmail());
-        mailMessage.setSubject("Complete Registration!");
-        mailMessage.setFrom(springMailUsername);
-        mailMessage.setText("To confirm your account, please click here : "
-                +"http://localhost:8080/api/auth/profile/confirm-account?token="
-                +confirmationToken.getConfirmationToken());*/
 
         try {
 
@@ -187,9 +164,6 @@ public class AuthController {
         }catch (javax.mail.MessagingException e){
             return ResponseEntity.badRequest().body("Error");
         }
-
-
-
 
         return ResponseEntity.ok(new MessageResponse("User registered successfully!"));
     }
