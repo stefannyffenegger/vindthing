@@ -79,7 +79,7 @@ public class JwtUtils {
 	 */
 	public boolean checkPermissionOwner(String token, Store store){
 		User user = getUserFromJwtToken(token);
-		return store.getOwner().getId().equals(user.getId());
+		return store.getOwner().equals(user.getEmail());
 	}
 
 	/**
@@ -90,7 +90,7 @@ public class JwtUtils {
 	 */
 	public boolean checkPermissionSharedUsers(String token, Store store){
 		User user = getUserFromJwtToken(token);
-		return store.getSharedUsers().stream().anyMatch(users -> user.getId().equals(users.getId()));
+		return store.getSharedUsers().stream().anyMatch(users -> user.getEmail().equals(users));
 	}
 
 	/**

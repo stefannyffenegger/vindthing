@@ -31,11 +31,11 @@ public class Store {
     private ArrayList<Item> items = new ArrayList<>();
 
     @NotBlank
-    @DBRef
-    private User owner;
+    //@DBRef
+    private String owner;
 
-    @DBRef
-    private ArrayList<User> sharedUsers = new ArrayList<>();
+    //@DBRef
+    private ArrayList<String> sharedUsers = new ArrayList<>();
 
     private String created;
 
@@ -51,7 +51,7 @@ public class Store {
      * @param description Store description
      * @param location    Store location
      */
-    public Store(String name, String description, String location, User user) {
+    public Store(String name, String description, String location, String user) {
         this.name = name;
         this.description = description;
         this.location = location;
@@ -101,15 +101,15 @@ public class Store {
         this.items = item;
     }
 
-    public User getOwner() { return owner; }
+    public String getOwner() { return owner; }
 
-    public void setOwner(User owner) { this.owner = owner; }
+    public void setOwner(String owner) { this.owner = owner; }
 
-    public ArrayList<User> getSharedUsers() {
+    public ArrayList<String> getSharedUsers() {
         return sharedUsers;
     }
 
-    public void setSharedUsers(ArrayList<User> user) {
+    public void setSharedUsers(ArrayList<String> user) {
         this.sharedUsers = user;
     }
 

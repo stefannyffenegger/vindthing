@@ -242,7 +242,7 @@ public class AppController {
                                       @Valid @RequestBody() StoreAddRequest storeAddRequest) {
         User user = jwtUtils.getUserFromJwtToken(token);
         ch.vindthing.model.Store store = new ch.vindthing.model.Store(storeAddRequest.getName(), storeAddRequest.getDescription(),
-                storeAddRequest.getLocation(), user);
+                storeAddRequest.getLocation(), user.getEmail());
         storeRepository.save(store); // Save store
         return ResponseEntity.status(HttpStatus.CREATED).body(new StoreResponse(store.getId(),
                 store.getName(), store.getDescription(), store.getLocation(), store.getCreated(), store.getLastEdit(),
@@ -259,7 +259,7 @@ public class AppController {
     @PreAuthorize("hasRole('USER') or hasRole('MODERATOR') or hasRole('ADMIN')")
     public ResponseEntity<?> updateStore(@Valid @RequestHeader (name="Authorization") String token,
                                          @RequestBody() StoreUpdateRequest storeUpdateRequest) {
-        ch.vindthing.model.Store store = storeRepository.findById(storeUpdateRequest.getId()).orElseThrow(() ->
+        Store store = storeRepository.findById(storeUpdateRequest.getId()).orElseThrow(() ->
                 new ResponseStatusException(HttpStatus.NOT_FOUND,
                         "Store Update: Store ID not found: " + storeUpdateRequest.getId()));
         // Usercheck
@@ -312,9 +312,10 @@ public class AppController {
     @PreAuthorize("hasRole('USER') or hasRole('MODERATOR') or hasRole('ADMIN')")
     public ResponseEntity<?> getAllStores(@RequestHeader (name="Authorization") String token) {
         User user = jwtUtils.getUserFromJwtToken(token);
-        Query query = new Query(Criteria.where("sharedUsers._id").is(user.getId()));
-        List<ch.vindthing.model.Store> stores = mongoTemplate.find(query, ch.vindthing.model.Store.class);
-        for (ch.vindthing.model.Store store: stores) {
+        Query query = new Query(Criteria.where("sharedUsers").is(user.getEmail()));
+        List<Store> stores = mongoTemplate.find(query, ch.vindthing.model.Store.class);
+
+        /*for (ch.vindthing.model.Store store: stores) {
             store.getOwner().setId(null);
             store.getOwner().setPassword(null);
             store.getOwner().setRoles(null);
@@ -323,7 +324,8 @@ public class AppController {
                 fuser.setId(null);
                 fuser.setRoles(null);
             }
-        }
+        }*/
+
 
         return ResponseEntity.ok(stores);
     }
@@ -338,7 +340,7 @@ public class AppController {
     @PreAuthorize("hasRole('USER') or hasRole('MODERATOR') or hasRole('ADMIN')")
     public ResponseEntity<?> addUserToStore(@Valid @RequestHeader (name="Authorization") String token,
                                          @RequestBody() UserAddRequest userAddRequest) {
-        ch.vindthing.model.Store store = storeRepository.findById(userAddRequest.getStoreId()).orElseThrow(() ->
+        Store store = storeRepository.findById(userAddRequest.getStoreId()).orElseThrow(() ->
                 new ResponseStatusException(HttpStatus.NOT_FOUND,
                         "Store Add User: Store ID not found: " + userAddRequest.getStoreId()));
         // Usercheck
@@ -350,11 +352,11 @@ public class AppController {
                     new ResponseStatusException(HttpStatus.NOT_FOUND,
                             "Store Add User: User not found: " + userAddRequest.getOwner()));
 
-            if(!store.getOwner().getEmail().equals(userAddRequest.getOwner())){
-                store.setOwner(newOwner);
-                if(store.getSharedUsers().stream().noneMatch(bob -> bob.getEmail().equals(userAddRequest
+            if(!store.getOwner().equals(userAddRequest.getOwner())){
+                store.setOwner(newOwner.getEmail());
+                if(store.getSharedUsers().stream().noneMatch(bob -> bob.equals(userAddRequest
                         .getSharedUser()))){
-                    store.getSharedUsers().add(newOwner);
+                    store.getSharedUsers().add(newOwner.getEmail());
                 }
             }
         }
@@ -362,9 +364,9 @@ public class AppController {
             User newUser = userRepository.findByEmail(userAddRequest.getSharedUser()).orElseThrow(() ->
                     new ResponseStatusException(HttpStatus.NOT_FOUND,
                             "Store Add User: User not found: " + userAddRequest.getSharedUser()));
-            if(store.getSharedUsers().stream().noneMatch(bob -> bob.getEmail().equals(userAddRequest
+            if(store.getSharedUsers().stream().noneMatch(bob -> bob.equals(userAddRequest
                     .getSharedUser()))){
-                store.getSharedUsers().add(newUser);
+                store.getSharedUsers().add(newUser.getEmail());
             }
         }
         store.setLastEdit(StringUtils.getCurrentTimeStamp()); // Update last edit
@@ -395,7 +397,7 @@ public class AppController {
             User user = userRepository.findByEmail(userRemoveRequest.getSharedUser()).orElseThrow(() ->
                     new ResponseStatusException(HttpStatus.NOT_FOUND,
                             "Store Remove User: User not found: " + userRemoveRequest.getSharedUser()));
-            store.getSharedUsers().removeIf(buzz -> buzz.getEmail().equals(userRemoveRequest.getSharedUser()));
+            store.getSharedUsers().removeIf(buzz -> buzz.equals(userRemoveRequest.getSharedUser()));
         }
         store.setLastEdit(StringUtils.getCurrentTimeStamp()); // Update last edit
         storeRepository.save(store);

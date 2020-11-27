@@ -19,11 +19,11 @@ public class StoreResponse {
     private String lastedit;
     private String imageId;
     private String owner;
-    private ArrayList<User> sharedUsers;
+    private ArrayList<String> sharedUsers;
     private ArrayList<Item> items;
 
     public StoreResponse(String id, String name, String description, String location, String created, String lastedit,
-                         String imageId, String owner, ArrayList<User> sharedUsers, ArrayList<Item> items) {
+                         String imageId, String owner, ArrayList<String> sharedUsers, ArrayList<Item> items) {
         this.id = id;
         this.name = name;
         this.description = description;
