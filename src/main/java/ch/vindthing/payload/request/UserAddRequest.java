@@ -3,11 +3,13 @@ package ch.vindthing.payload.request;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.ArrayList;
+
 @Getter
 @Setter
 public class UserAddRequest {
     private String owner;
-    private String sharedUser;
+    private ArrayList<String> sharedUsers;
     private String storeId;
 
     /**
@@ -16,9 +18,9 @@ public class UserAddRequest {
      * @param sharedUser new regular User (e-mail)
      * @param storeId Store id
      */
-    public UserAddRequest(String owner, String sharedUser, String storeId) {
+    public UserAddRequest(String owner, ArrayList<String> sharedUser, String storeId) {
         this.owner = owner;
-        this.sharedUser = sharedUser;
+        this.sharedUsers = sharedUser;
         this.storeId = storeId;
     }
 }
