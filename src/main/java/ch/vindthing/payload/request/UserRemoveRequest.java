@@ -5,6 +5,7 @@ import lombok.Setter;
 
 @Getter
 @Setter
+@Deprecated
 public class UserRemoveRequest {
     private String sharedUser;
     private String storeId;

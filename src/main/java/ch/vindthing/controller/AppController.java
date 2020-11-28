@@ -70,8 +70,8 @@ public class AppController {
      */
     @RequestMapping("/item/add")
     @PreAuthorize("hasRole('USER') or hasRole('MODERATOR') or hasRole('ADMIN')")
-    public ResponseEntity<?> addItemToStore(@Valid @RequestHeader (name="Authorization") String token,
-                                            @RequestBody() ItemAddRequest itemAddRequest) {
+    public ResponseEntity<?> addItemToStore(@RequestHeader (name="Authorization") String token,
+                                            @Valid @RequestBody() ItemAddRequest itemAddRequest) {
         // Check if store exists
         ch.vindthing.model.Store store = storeRepository.findById(itemAddRequest.getStoreId()).
                 orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
@@ -96,8 +96,8 @@ public class AppController {
      */
     @RequestMapping("/item/update")
     @PreAuthorize("hasRole('USER') or hasRole('MODERATOR') or hasRole('ADMIN')")
-    public ResponseEntity<?> updateItem(@Valid @RequestHeader (name="Authorization") String token,
-                                        @RequestBody() ItemUpdateRequest itemUpdateRequest) {
+    public ResponseEntity<?> updateItem(@RequestHeader (name="Authorization") String token,
+                                        @Valid @RequestBody() ItemUpdateRequest itemUpdateRequest) {
         // Find Store by Item ID
         Query query = new Query(Criteria.where("items._id").is(itemUpdateRequest.getId()));
         try {
@@ -149,8 +149,8 @@ public class AppController {
      */
     @RequestMapping("/item/move")
     @PreAuthorize("hasRole('USER') or hasRole('MODERATOR') or hasRole('ADMIN')")
-    public ResponseEntity<?> moveItem(@Valid @RequestHeader (name="Authorization") String token,
-                                      @RequestBody() ItemMoveRequest itemMoveRequest) {
+    public ResponseEntity<?> moveItem(@RequestHeader (name="Authorization") String token,
+                                      @Valid @RequestBody() ItemMoveRequest itemMoveRequest) {
         // Find Store and Item by Item ID
         Query query = new Query(Criteria.where("items._id").is(itemMoveRequest.getId()));
         query.fields().include("items.$").include("sharedUsers");
@@ -203,8 +203,8 @@ public class AppController {
      */
     @RequestMapping("/item/delete")
     @PreAuthorize("hasRole('USER') or hasRole('MODERATOR') or hasRole('ADMIN')")
-    public ResponseEntity<?> deleteItem(@Valid @RequestHeader (name="Authorization") String token,
-                                        @RequestBody() ItemUpdateRequest itemUpdateRequest) {
+    public ResponseEntity<?> deleteItem(@RequestHeader (name="Authorization") String token,
+                                        @Valid @RequestBody() ItemUpdateRequest itemUpdateRequest) {
         // Find Store and Item by Item ID
         Query query = new Query(Criteria.where("items._id").is(itemUpdateRequest.getId()));
         query.fields().include("items.$").include("sharedUsers");
@@ -245,7 +245,7 @@ public class AppController {
         storeRepository.save(store); // Save store
         return ResponseEntity.status(HttpStatus.CREATED).body(new StoreResponse(store.getId(),
                 store.getName(), store.getDescription(), store.getLocation(), store.getCreated(), store.getLastEdit(),
-                store.getImageId(), store.getOwner().toString(), store.getSharedUsers(), store.getItems()));
+                store.getImageId(), store.getOwner(), store.getSharedUsers(), store.getItems()));
     }
 
     /**
@@ -278,7 +278,7 @@ public class AppController {
         storeRepository.save(store); // Update store
         return ResponseEntity.ok(new StoreResponse(store.getId(), store.getName(), store.getDescription(),
                 store.getLocation(), store.getCreated(), store.getLastEdit(), store.getImageId(),
-                store.getOwner().toString(), store.getSharedUsers(), store.getItems()));
+                store.getOwner(), store.getSharedUsers(), store.getItems()));
     }
 
     /**
@@ -325,8 +325,8 @@ public class AppController {
      */
     @RequestMapping("/store/user/update")
     @PreAuthorize("hasRole('USER') or hasRole('MODERATOR') or hasRole('ADMIN')")
-    public ResponseEntity<?> updateStoreUsers(@Valid @RequestHeader (name="Authorization") String token,
-                                         @RequestBody() UserUpdateRequest userAddRequest) {
+    public ResponseEntity<?> updateStoreUsers(@RequestHeader (name="Authorization") String token,
+                                              @Valid @RequestBody() UserUpdateRequest userAddRequest) {
         Store store = storeRepository.findById(userAddRequest.getStoreId()).orElseThrow(() ->
                 new ResponseStatusException(HttpStatus.NOT_FOUND,
                         "Store Add User: Store ID not found: " + userAddRequest.getStoreId()));
@@ -366,6 +366,7 @@ public class AppController {
      * @param userRemoveRequest Request
      * @return Status Response
      */
+    @Deprecated
     @RequestMapping("/store/user/remove")
     @PreAuthorize("hasRole('USER') or hasRole('MODERATOR') or hasRole('ADMIN')")
     public ResponseEntity<?> removeUserFromStore(@Valid @RequestHeader (name="Authorization") String token,
