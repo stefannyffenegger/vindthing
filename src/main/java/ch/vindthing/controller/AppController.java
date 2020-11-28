@@ -1,6 +1,5 @@
 package ch.vindthing.controller;
 
-import ch.vindthing.model.EResponse;
 import ch.vindthing.model.Item;
 import ch.vindthing.model.Store;
 import ch.vindthing.model.User;
@@ -315,31 +314,19 @@ public class AppController {
         Query query = new Query(Criteria.where("sharedUsers").is(user.getEmail()));
         List<Store> stores = mongoTemplate.find(query, ch.vindthing.model.Store.class);
 
-        /*for (ch.vindthing.model.Store store: stores) {
-            store.getOwner().setId(null);
-            store.getOwner().setPassword(null);
-            store.getOwner().setRoles(null);
-            for (User fuser: store.getSharedUsers()) {
-                fuser.setPassword(null);
-                fuser.setId(null);
-                fuser.setRoles(null);
-            }
-        }*/
-
-
         return ResponseEntity.ok(stores);
     }
 
     /**
-     * Adds Users to Stores
+     * Update Users of Stores
      * Only the owner can update a Store
      * @param userAddRequest Request
      * @return Status Response
      */
-    @RequestMapping("/store/user/add")
+    @RequestMapping("/store/user/update")
     @PreAuthorize("hasRole('USER') or hasRole('MODERATOR') or hasRole('ADMIN')")
-    public ResponseEntity<?> addUserToStore(@Valid @RequestHeader (name="Authorization") String token,
-                                         @RequestBody() UserAddRequest userAddRequest) {
+    public ResponseEntity<?> updateStoreUsers(@Valid @RequestHeader (name="Authorization") String token,
+                                         @RequestBody() UserUpdateRequest userAddRequest) {
         Store store = storeRepository.findById(userAddRequest.getStoreId()).orElseThrow(() ->
                 new ResponseStatusException(HttpStatus.NOT_FOUND,
                         "Store Add User: Store ID not found: " + userAddRequest.getStoreId()));
@@ -352,28 +339,25 @@ public class AppController {
                     new ResponseStatusException(HttpStatus.NOT_FOUND,
                             "Store Add User: User not found: " + userAddRequest.getOwner()));
 
-            if(!store.getOwner().equals(userAddRequest.getOwner())){
-                store.setOwner(newOwner.getEmail());
-                if(store.getSharedUsers().stream().noneMatch(bob -> bob.equals(userAddRequest
-                        .getSharedUser()))){
-                    store.getSharedUsers().add(newOwner.getEmail());
-                }
+            store.setOwner(newOwner.getEmail());
+            // Check if sharedUsers already contains new owner, else add to shared users
+            if(store.getSharedUsers().stream().noneMatch(bob -> bob.equals(userAddRequest.getOwner()))){
+                store.getSharedUsers().add(newOwner.getEmail());
             }
         }
-        if(userAddRequest.getSharedUser()!=null && !userAddRequest.getSharedUser().equals("")){
-            User newUser = userRepository.findByEmail(userAddRequest.getSharedUser()).orElseThrow(() ->
-                    new ResponseStatusException(HttpStatus.NOT_FOUND,
-                            "Store Add User: User not found: " + userAddRequest.getSharedUser()));
-            if(store.getSharedUsers().stream().noneMatch(bob -> bob.equals(userAddRequest
-                    .getSharedUser()))){
-                store.getSharedUsers().add(newUser.getEmail());
+        // Check if SharedUsers contains nothing
+        if(userAddRequest.getSharedUsers()!=null && !userAddRequest.getSharedUsers().isEmpty()){
+            store.setSharedUsers(userAddRequest.getSharedUsers());
+            // Check if sharedUsers contains owner, else add to shared users >> sharedUsers must contain the owner!
+            if(store.getSharedUsers().stream().noneMatch(bob -> bob.equals(store.getOwner()))){
+                store.getSharedUsers().add(store.getOwner());
             }
         }
         store.setLastEdit(StringUtils.getCurrentTimeStamp()); // Update last edit
         storeRepository.save(store); // Update store
         return ResponseEntity.ok(new StoreResponse(store.getId(), store.getName(), store.getDescription(),
                 store.getLocation(), store.getCreated(), store.getLastEdit(), store.getImageId(),
-                store.getOwner().toString(), store.getSharedUsers(), store.getItems()));
+                store.getOwner(), store.getSharedUsers(), store.getItems()));
     }
 
     /**
@@ -386,7 +370,7 @@ public class AppController {
     @PreAuthorize("hasRole('USER') or hasRole('MODERATOR') or hasRole('ADMIN')")
     public ResponseEntity<?> removeUserFromStore(@Valid @RequestHeader (name="Authorization") String token,
                                             @RequestBody() UserRemoveRequest userRemoveRequest) {
-        ch.vindthing.model.Store store = storeRepository.findById(userRemoveRequest.getStoreId())
+        Store store = storeRepository.findById(userRemoveRequest.getStoreId())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
                         "Store Remove User: Store ID not found: " + userRemoveRequest.getStoreId()));
         // Usercheck
@@ -403,7 +387,7 @@ public class AppController {
         storeRepository.save(store);
         return ResponseEntity.ok(new StoreResponse(store.getId(), store.getName(), store.getDescription(),
                 store.getLocation(), store.getCreated(), store.getLastEdit(), store.getImageId(),
-                store.getOwner().toString(), store.getSharedUsers(), store.getItems()));
+                store.getOwner(), store.getSharedUsers(), store.getItems()));
     }
 
     /**
@@ -508,7 +492,8 @@ public class AppController {
         GridFSDownloadStream gridFSDownloadStream = gridFSBucket.openDownloadStream(new ObjectId(id));
         return ResponseEntity.ok()
                 .contentLength(gridFSDownloadStream.getGridFSFile().getLength())
-                .contentType(MediaType.parseMediaType(gridFSDownloadStream.getGridFSFile().getMetadata().getString("type")))
+                .contentType(MediaType.parseMediaType(gridFSDownloadStream
+                        .getGridFSFile().getMetadata().getString("type")))
                 .body(new InputStreamResource(gridFSDownloadStream));
     }
 }
