@@ -12,6 +12,7 @@ public class ItemUpdateRequest {
     private String name;
     private String description;
     private int quantity;
+    private boolean inStore;
 
     /**
      * Request to update or delete an existing Item
@@ -20,11 +21,12 @@ public class ItemUpdateRequest {
      * @param description Optional
      * @param quantity Optional
      */
-    public ItemUpdateRequest(String id, String name, String description, int quantity) {
+    public ItemUpdateRequest(String id, String name, String description, int quantity, boolean inStore) {
         this.id = id;
         this.name = name;
         this.description = description;
         this.quantity = quantity;
+        this.inStore = inStore;
     }
 }
 

@@ -15,7 +15,27 @@ public final class EResponse {
             this.label = label;
         }
 
-        public String getLabel() {
+        @Override
+        public String toString() {
+            return label;
+        }
+    }
+
+    public enum Item {
+        STORE_ADD("Store Add: "),
+        STORE_UPDATE("Store Update: "),
+        ITEM_ADD("Item Add: "),
+        ITEM_UPDATE("Item Update: "),
+        ITEM_DELETE("Item Delete: ");
+
+        private final String label;
+
+        private Item(String label) {
+            this.label = label;
+        }
+
+        @Override
+        public String toString() {
             return label;
         }
     }

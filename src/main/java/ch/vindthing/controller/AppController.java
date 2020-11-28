@@ -1,5 +1,6 @@
 package ch.vindthing.controller;
 
+import ch.vindthing.model.EResponse;
 import ch.vindthing.model.Item;
 import ch.vindthing.model.Store;
 import ch.vindthing.model.User;
@@ -86,7 +87,8 @@ public class AppController {
         store.getItems().add(item);
         storeRepository.save(store); // Update Store
         return ResponseEntity.status(HttpStatus.CREATED).body(new ItemResponse(item.getId(), item.getName(),
-                item.getDescription(), item.getQuantity(), item.getCreated(), item.getLastedit(), item.getImageId()));
+                item.getDescription(), item.getQuantity(), item.getCreated(), item.getLastedit(), item.getImageId(),
+                item.isInStore(), item.getUseCount()));
     }
 
     /**
@@ -122,19 +124,26 @@ public class AppController {
             update.set("items.$.quantity", itemUpdateRequest.getQuantity());
         }
         String timestamp = StringUtils.getCurrentTimeStamp();
-        update.set("items.$.lastedit", timestamp);
-        update.set("lastedit", timestamp);
+        update.set("items.$.lastedit", timestamp); // item
+        update.set("lastedit", timestamp); // store
 
         // Find Item and send response
         Query findQuery = query;
         findQuery.fields().include("items.$");
 
-        Item newItem;
+        Item item;
         try{
+            item = mongoTemplate.findOne(findQuery, ch.vindthing.model.Store.class).getItems().get(0);
+            if(item.isInStore()!=itemUpdateRequest.isInStore()){
+                item.toggleInStore(); // Toggle inStore and count up useCount if toggle to false
+                update.set("items.$.inStore", item.isInStore());
+                update.set("items.$.useCount", item.getUseCount());
+            }
             mongoTemplate.updateFirst(query, update, ch.vindthing.model.Store.class);
-            newItem = mongoTemplate.findOne(findQuery, ch.vindthing.model.Store.class).getItems().get(0);
-            return ResponseEntity.ok(new ItemResponse(newItem.getId(), newItem.getName(), newItem.getDescription(),
-                    newItem.getQuantity(), newItem.getCreated(), newItem.getLastedit(), newItem.getImageId()));
+            item = mongoTemplate.findOne(findQuery, ch.vindthing.model.Store.class).getItems().get(0);
+            return ResponseEntity.ok(new ItemResponse(item.getId(), item.getName(), item.getDescription(),
+                    item.getQuantity(), item.getCreated(), item.getLastedit(), item.getImageId(), item.isInStore(),
+                    item.getUseCount()));
         }catch (Exception e) {
             return ResponseEntity.badRequest().body("Item Update Failed for ID: " + itemUpdateRequest.getId()
                     + " Exception: " + e);
@@ -193,7 +202,8 @@ public class AppController {
         mongoTemplate.updateFirst(deleteQuery, update, ch.vindthing.model.Store.class);
 
         return ResponseEntity.ok(new ItemResponse(item.getId(), item.getName(), item.getDescription(),
-                item.getQuantity(), item.getCreated(), item.getLastedit(), item.getImageId()));
+                item.getQuantity(), item.getCreated(), item.getLastedit(), item.getImageId(), item.isInStore(),
+                item.getUseCount()));
     }
 
     /**
@@ -460,6 +470,7 @@ public class AppController {
 
                 break;
         }
+        System.out.println(EResponse.Store.STORE_ADD);
         return ResponseEntity.badRequest().body("Wrong image parameters!");
     }
 

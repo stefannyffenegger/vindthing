@@ -26,6 +26,10 @@ public class Item {
 
     private String lastedit;
 
+    private boolean inStore;
+
+    private int useCount;
+
     public Item() {
     }
 
@@ -41,6 +45,7 @@ public class Item {
         this.quantity = quantity;
         this.created = StringUtils.getCurrentTimeStamp();
         this.lastedit = StringUtils.getCurrentTimeStamp();
+        this.inStore = true;
     }
 
     public String getId() {
@@ -93,5 +98,23 @@ public class Item {
 
     public void setLastedit(String lastedit) {
         this.lastedit = lastedit;
+    }
+
+    public boolean isInStore() {
+        return inStore;
+    }
+
+    /**
+     * Toggles inStore and counts up useCount if toggle to false
+     */
+    public void toggleInStore() {
+        inStore = !inStore; // toggle
+        if(!inStore){
+            useCount++;
+        }
+    }
+
+    public int getUseCount() {
+        return useCount;
     }
 }
