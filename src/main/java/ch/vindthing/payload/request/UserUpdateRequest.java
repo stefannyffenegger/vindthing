@@ -7,7 +7,7 @@ import java.util.ArrayList;
 
 @Getter
 @Setter
-public class UserAddRequest {
+public class UserUpdateRequest {
     private String owner;
     private ArrayList<String> sharedUsers;
     private String storeId;
@@ -18,7 +18,7 @@ public class UserAddRequest {
      * @param sharedUser new regular User (e-mail)
      * @param storeId Store id
      */
-    public UserAddRequest(String owner, ArrayList<String> sharedUser, String storeId) {
+    public UserUpdateRequest(String owner, ArrayList<String> sharedUser, String storeId) {
         this.owner = owner;
         this.sharedUsers = sharedUser;
         this.storeId = storeId;

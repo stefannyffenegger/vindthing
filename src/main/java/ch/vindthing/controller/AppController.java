@@ -35,7 +35,6 @@ import org.springframework.web.server.ResponseStatusException;
 import javax.validation.Valid;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.ArrayList;
 import java.util.List;
 
 
@@ -327,7 +326,7 @@ public class AppController {
     @RequestMapping("/store/user/update")
     @PreAuthorize("hasRole('USER') or hasRole('MODERATOR') or hasRole('ADMIN')")
     public ResponseEntity<?> updateStoreUsers(@Valid @RequestHeader (name="Authorization") String token,
-                                         @RequestBody() UserAddRequest userAddRequest) {
+                                         @RequestBody() UserUpdateRequest userAddRequest) {
         Store store = storeRepository.findById(userAddRequest.getStoreId()).orElseThrow(() ->
                 new ResponseStatusException(HttpStatus.NOT_FOUND,
                         "Store Add User: Store ID not found: " + userAddRequest.getStoreId()));
