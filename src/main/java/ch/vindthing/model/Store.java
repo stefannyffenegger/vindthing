@@ -2,14 +2,10 @@ package ch.vindthing.model;
 
 import ch.vindthing.util.StringUtils;
 import org.springframework.data.annotation.Id;
-import org.springframework.data.mongodb.core.mapping.DBRef;
 import org.springframework.data.mongodb.core.mapping.Document;
-
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
 import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.Set;
 
 /**
  * Stores contain Items
@@ -31,10 +27,8 @@ public class Store {
     private ArrayList<Item> items = new ArrayList<>();
 
     @NotBlank
-    //@DBRef
     private String owner;
 
-    //@DBRef
     private ArrayList<String> sharedUsers = new ArrayList<>();
 
     private String created;
@@ -42,6 +36,8 @@ public class Store {
     private String lastEdit;
 
     private String imageId;
+
+    private ArrayList<Comment> comments = new ArrayList<>();
 
     public Store() {
     }
@@ -128,4 +124,8 @@ public class Store {
     public String getImageId() { return imageId; }
 
     public void setImageId(String imageId) { this.imageId = imageId; }
+
+    public ArrayList<Comment> getComments() { return comments; }
+
+    public void setComments(ArrayList<Comment> comments) { this.comments = comments; }
 }

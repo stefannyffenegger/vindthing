@@ -12,6 +12,7 @@ public class ItemUpdateRequest {
     private String name;
     private String description;
     private int quantity;
+    @NotBlank
     private boolean inStore;
 
     /**

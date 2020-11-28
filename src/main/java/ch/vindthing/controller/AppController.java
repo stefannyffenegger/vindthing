@@ -1,9 +1,6 @@
 package ch.vindthing.controller;
 
-import ch.vindthing.model.EResponse;
-import ch.vindthing.model.Item;
-import ch.vindthing.model.Store;
-import ch.vindthing.model.User;
+import ch.vindthing.model.*;
 import ch.vindthing.payload.request.*;
 import ch.vindthing.payload.response.ImageResponse;
 import ch.vindthing.payload.response.ItemResponse;
@@ -255,7 +252,7 @@ public class AppController {
         storeRepository.save(store); // Save store
         return ResponseEntity.status(HttpStatus.CREATED).body(new StoreResponse(store.getId(),
                 store.getName(), store.getDescription(), store.getLocation(), store.getCreated(), store.getLastEdit(),
-                store.getImageId(), store.getOwner(), store.getSharedUsers(), store.getItems()));
+                store.getImageId(), store.getOwner(), store.getSharedUsers(), store.getItems(), store.getComments()));
     }
 
     /**
@@ -288,7 +285,7 @@ public class AppController {
         storeRepository.save(store); // Update store
         return ResponseEntity.ok(new StoreResponse(store.getId(), store.getName(), store.getDescription(),
                 store.getLocation(), store.getCreated(), store.getLastEdit(), store.getImageId(),
-                store.getOwner(), store.getSharedUsers(), store.getItems()));
+                store.getOwner(), store.getSharedUsers(), store.getItems(), store.getComments()));
     }
 
     /**
@@ -367,7 +364,7 @@ public class AppController {
         storeRepository.save(store); // Update store
         return ResponseEntity.ok(new StoreResponse(store.getId(), store.getName(), store.getDescription(),
                 store.getLocation(), store.getCreated(), store.getLastEdit(), store.getImageId(),
-                store.getOwner(), store.getSharedUsers(), store.getItems()));
+                store.getOwner(), store.getSharedUsers(), store.getItems(), store.getComments()));
     }
 
     /**
@@ -398,7 +395,69 @@ public class AppController {
         storeRepository.save(store);
         return ResponseEntity.ok(new StoreResponse(store.getId(), store.getName(), store.getDescription(),
                 store.getLocation(), store.getCreated(), store.getLastEdit(), store.getImageId(),
-                store.getOwner(), store.getSharedUsers(), store.getItems()));
+                store.getOwner(), store.getSharedUsers(), store.getItems(), store.getComments()));
+    }
+
+    /**
+     * Add a Comments to a Store
+     * @param commentUpdateRequest Request
+     * @return Status Response
+     */
+    @RequestMapping("/store/comment/add")
+    @PreAuthorize("hasRole('USER') or hasRole('MODERATOR') or hasRole('ADMIN')")
+    public ResponseEntity<?> addCommentToStore(@RequestHeader (name="Authorization") String token,
+                                              @Valid @RequestBody() CommentAddRequest commentUpdateRequest) {
+        Store store = storeRepository.findById(commentUpdateRequest.getStoreId()).orElseThrow(() ->
+                new ResponseStatusException(HttpStatus.NOT_FOUND,
+                        "Store Update Comment: Store ID not found: " + commentUpdateRequest.getStoreId()));
+        // Usercheck
+        if(!jwtUtils.checkPermissionSharedUsers(token, store)){
+            return ResponseEntity.badRequest().body("Store Update Comment: Only users can update a Store!");
+        }
+        if(commentUpdateRequest.getMessage()!=null && !commentUpdateRequest.getMessage().isEmpty()){
+            User user = jwtUtils.getUserFromJwtToken(token);
+            Comment comment = new Comment(commentUpdateRequest.getMessage(), user.getEmail());
+            store.getComments().add(comment);
+        }
+        store.setLastEdit(StringUtils.getCurrentTimeStamp()); // Update last edit
+        storeRepository.save(store); // Update store
+        return ResponseEntity.ok(new StoreResponse(store.getId(), store.getName(), store.getDescription(),
+                store.getLocation(), store.getCreated(), store.getLastEdit(), store.getImageId(),
+                store.getOwner(), store.getSharedUsers(), store.getItems(), store.getComments()));
+    }
+
+    /**
+     * Remove a Comment from a Store
+     * @param commentRemoveRequest Request
+     * @return Status Response
+     */
+    @RequestMapping("/store/comment/remove")
+    @PreAuthorize("hasRole('USER') or hasRole('MODERATOR') or hasRole('ADMIN')")
+    public ResponseEntity<?> removeCommentFromStore(@Valid @RequestHeader (name="Authorization") String token,
+                                                 @RequestBody() CommentRemoveRequest commentRemoveRequest) {
+        // Find Store and Comment by Comment ID
+        Query query = new Query(Criteria.where("comments._id").is(commentRemoveRequest.getId()));
+        query.fields().include("comments.$").include("sharedUsers");
+
+        Store store;
+        Comment comment;
+        try{
+            store = mongoTemplate.findOne(query, Store.class);
+            // Usercheck
+            if(!jwtUtils.checkPermissionSharedUsers(token, store)){
+                return ResponseEntity.badRequest().body("Comment Remove: No Permission for this Store!");
+            }
+            comment = store.getComments().get(0);
+        }catch (Exception e) {
+            return ResponseEntity.badRequest().body("Comment Remove: Comment ID not found: " +
+                    commentRemoveRequest.getId() + " Exception: " + e);
+        }
+
+        // Delete Comment
+        Update update = new Update().pull("comments", comment);
+        mongoTemplate.updateFirst(query, update, Store.class);
+        return ResponseEntity.ok(new MessageResponse("Comment " + commentRemoveRequest.getId()
+                + " successfully deleted!"));
     }
 
     /**
