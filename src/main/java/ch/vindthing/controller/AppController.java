@@ -416,7 +416,7 @@ public class AppController {
         }
         if(commentUpdateRequest.getMessage()!=null && !commentUpdateRequest.getMessage().isEmpty()){
             User user = jwtUtils.getUserFromJwtToken(token);
-            Comment comment = new Comment(commentUpdateRequest.getMessage(), user.getEmail());
+            Comment comment = new Comment(user.getEmail(), commentUpdateRequest.getMessage());
             store.getComments().add(comment);
         }
         store.setLastEdit(StringUtils.getCurrentTimeStamp()); // Update last edit
