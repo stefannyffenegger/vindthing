@@ -85,7 +85,7 @@ public class AppController {
         storeRepository.save(store); // Update Store
         return ResponseEntity.status(HttpStatus.CREATED).body(new ItemResponse(item.getId(), item.getName(),
                 item.getDescription(), item.getQuantity(), item.getCreated(), item.getLastedit(), item.getImageId(),
-                item.isInStore(), item.getUseCount()));
+                item.isInStore(), item.getUseCount(), item.getUseDates()));
     }
 
     /**
@@ -130,17 +130,18 @@ public class AppController {
 
         Item item;
         try{
-            item = mongoTemplate.findOne(findQuery, ch.vindthing.model.Store.class).getItems().get(0);
+            item = mongoTemplate.findOne(findQuery, Store.class).getItems().get(0);
             if(item.isInStore()!=itemUpdateRequest.isInStore()){
                 item.toggleInStore(); // Toggle inStore and count up useCount if toggle to false
                 update.set("items.$.inStore", item.isInStore());
                 update.set("items.$.useCount", item.getUseCount());
+                update.set("items.$.useDates", item.getUseDates());
             }
-            mongoTemplate.updateFirst(query, update, ch.vindthing.model.Store.class);
-            item = mongoTemplate.findOne(findQuery, ch.vindthing.model.Store.class).getItems().get(0);
+            mongoTemplate.updateFirst(query, update, Store.class);
+            item = mongoTemplate.findOne(findQuery, Store.class).getItems().get(0);
             return ResponseEntity.ok(new ItemResponse(item.getId(), item.getName(), item.getDescription(),
                     item.getQuantity(), item.getCreated(), item.getLastedit(), item.getImageId(), item.isInStore(),
-                    item.getUseCount()));
+                    item.getUseCount(), item.getUseDates()));
         }catch (Exception e) {
             return ResponseEntity.badRequest().body("Item Update Failed for ID: " + itemUpdateRequest.getId()
                     + " Exception: " + e);
@@ -200,7 +201,7 @@ public class AppController {
 
         return ResponseEntity.ok(new ItemResponse(item.getId(), item.getName(), item.getDescription(),
                 item.getQuantity(), item.getCreated(), item.getLastedit(), item.getImageId(), item.isInStore(),
-                item.getUseCount()));
+                item.getUseCount(), item.getUseDates()));
     }
 
     /**
@@ -353,7 +354,8 @@ public class AppController {
             }
         }
         // Check if SharedUsers contains nothing
-        if(userAddRequest.getSharedUsers()!=null && !userAddRequest.getSharedUsers().isEmpty()){
+        if(userAddRequest.getSharedUsers()!=null && !userAddRequest.getSharedUsers().isEmpty() &&
+                 userAddRequest.getOwner().equals("") || userAddRequest.getOwner()==null){
             store.setSharedUsers(userAddRequest.getSharedUsers());
             // Check if sharedUsers contains owner, else add to shared users >> sharedUsers must contain the owner!
             if(store.getSharedUsers().stream().noneMatch(bob -> bob.equals(store.getOwner()))){

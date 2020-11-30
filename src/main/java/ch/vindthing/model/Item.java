@@ -6,6 +6,7 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import javax.validation.constraints.Size;
+import java.util.ArrayList;
 
 @Document
 public class Item {
@@ -29,6 +30,8 @@ public class Item {
     private boolean inStore;
 
     private int useCount;
+
+    private ArrayList<String> useDates = new ArrayList<>();
 
     public Item() {
     }
@@ -111,10 +114,22 @@ public class Item {
         inStore = !inStore; // toggle
         if(!inStore){
             useCount++;
+            addCurrentUseDate();
         }
     }
 
     public int getUseCount() {
         return useCount;
+    }
+
+    public ArrayList<String> getUseDates() {
+        return useDates;
+    }
+
+    /**
+     * Adds the current timestamp
+     */
+    private void addCurrentUseDate() {
+        this.useDates.add(StringUtils.getCurrentTimeStamp());
     }
 }
