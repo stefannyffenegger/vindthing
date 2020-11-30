@@ -328,35 +328,36 @@ public class AppController {
     /**
      * Update Users of Stores
      * Only the owner can update a Store
-     * @param userAddRequest Request
+     * @param userUpdateRequest Request
      * @return Status Response
      */
     @RequestMapping("/store/user/update")
     @PreAuthorize("hasRole('USER') or hasRole('MODERATOR') or hasRole('ADMIN')")
     public ResponseEntity<?> updateStoreUsers(@RequestHeader (name="Authorization") String token,
-                                              @Valid @RequestBody() UserUpdateRequest userAddRequest) {
-        Store store = storeRepository.findById(userAddRequest.getStoreId()).orElseThrow(() ->
+                                              @Valid @RequestBody() UserUpdateRequest userUpdateRequest) {
+        Store store = storeRepository.findById(userUpdateRequest.getStoreId()).orElseThrow(() ->
                 new ResponseStatusException(HttpStatus.NOT_FOUND,
-                        "Store Add User: Store ID not found: " + userAddRequest.getStoreId()));
+                        "Store Add User: Store ID not found: " + userUpdateRequest.getStoreId()));
         // Usercheck
         if(!jwtUtils.checkPermissionOwner(token, store)){
             return ResponseEntity.badRequest().body("Store Add User: Only owners can update a Store!");
         }
-        if(userAddRequest.getOwner()!=null && !userAddRequest.getOwner().equals("")){
-            User newOwner = userRepository.findByEmail(userAddRequest.getOwner()).orElseThrow(() ->
+        if(userUpdateRequest.getOwner()!=null && !userUpdateRequest.getOwner().equals("")){
+            User newOwner = userRepository.findByEmail(userUpdateRequest.getOwner()).orElseThrow(() ->
                     new ResponseStatusException(HttpStatus.NOT_FOUND,
-                            "Store Add User: User not found: " + userAddRequest.getOwner()));
+                            "Store Add User: User not found: " + userUpdateRequest.getOwner()));
 
             store.setOwner(newOwner.getEmail());
             // Check if sharedUsers already contains new owner, else add to shared users
-            if(store.getSharedUsers().stream().noneMatch(bob -> bob.equals(userAddRequest.getOwner()))){
+            if(store.getSharedUsers().stream().noneMatch(bob -> bob.equals(userUpdateRequest.getOwner()))){
                 store.getSharedUsers().add(newOwner.getEmail());
             }
         }
+        System.out.println("Owner "+userUpdateRequest.getOwner());
         // Check if SharedUsers contains nothing
-        if(userAddRequest.getSharedUsers()!=null && !userAddRequest.getSharedUsers().isEmpty() &&
-                 userAddRequest.getOwner().equals("") || userAddRequest.getOwner()==null){
-            store.setSharedUsers(userAddRequest.getSharedUsers());
+        if(userUpdateRequest.getSharedUsers()!=null && !userUpdateRequest.getSharedUsers().isEmpty() &&
+                 userUpdateRequest.getOwner()==null){
+            store.setSharedUsers(userUpdateRequest.getSharedUsers());
             // Check if sharedUsers contains owner, else add to shared users >> sharedUsers must contain the owner!
             if(store.getSharedUsers().stream().noneMatch(bob -> bob.equals(store.getOwner()))){
                 store.getSharedUsers().add(store.getOwner());
