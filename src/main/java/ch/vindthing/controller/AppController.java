@@ -353,10 +353,9 @@ public class AppController {
                 store.getSharedUsers().add(newOwner.getEmail());
             }
         }
-        System.out.println("Owner "+userUpdateRequest.getOwner());
+
         // Check if SharedUsers contains nothing
-        if(userUpdateRequest.getSharedUsers()!=null && !userUpdateRequest.getSharedUsers().isEmpty() &&
-                 userUpdateRequest.getOwner()==null){
+        if(userUpdateRequest.getOwner()==null){
             store.setSharedUsers(userUpdateRequest.getSharedUsers());
             // Check if sharedUsers contains owner, else add to shared users >> sharedUsers must contain the owner!
             if(store.getSharedUsers().stream().noneMatch(bob -> bob.equals(store.getOwner()))){
