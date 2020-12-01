@@ -556,9 +556,16 @@ public class AppController {
      * Download an image with the image ID
      * @return Response
      */
-    @GetMapping("image/download/{id}")
-    @PreAuthorize("hasRole('USER') or hasRole('MODERATOR') or hasRole('ADMIN')")
-    public ResponseEntity<?> downloadImage(@PathVariable("id") String id) throws IOException {
+    @GetMapping("image/download/{id}/{token}")
+    //@PreAuthorize("hasRole('USER') or hasRole('MODERATOR') or hasRole('ADMIN')")
+    public ResponseEntity<?> downloadImage(@PathVariable("id") String id,
+                                           @PathVariable("token") String token) throws IOException {
+        if (token == null && token.equals("")) {
+            return ResponseEntity.badRequest().body("No token present!");
+        }
+        if (!jwtUtils.validateJwtToken(token)) {
+            return ResponseEntity.badRequest().body("Token not valid!");
+        }
         if (id == null && id.equals("")) {
             return ResponseEntity.badRequest().body("Wrong image parameters!");
         }
