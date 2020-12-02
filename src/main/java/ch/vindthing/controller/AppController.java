@@ -9,6 +9,7 @@ import ch.vindthing.payload.response.StoreResponse;
 import ch.vindthing.repository.StoreRepository;
 import ch.vindthing.repository.UserRepository;
 import ch.vindthing.security.jwt.JwtUtils;
+import ch.vindthing.model.ChatMessage;
 import ch.vindthing.util.StringUtils;
 import com.mongodb.client.gridfs.GridFSBucket;
 import com.mongodb.client.gridfs.GridFSDownloadStream;
@@ -24,6 +25,7 @@ import org.springframework.data.mongodb.gridfs.GridFsTemplate;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
@@ -33,7 +35,9 @@ import org.springframework.web.server.ResponseStatusException;
 import javax.validation.Valid;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 
 /**
@@ -57,6 +61,12 @@ public class AppController {
 
     @Autowired
     private GridFSBucket gridFSBucket;
+
+    @Autowired
+    private SimpMessagingTemplate simpMessagingTemplate;
+
+    @Autowired
+    private ActiveUserManager activeUserManager;
 
     @Autowired
     JwtUtils jwtUtils;
@@ -284,6 +294,16 @@ public class AppController {
         }
         store.setLastEdit(StringUtils.getCurrentTimeStamp()); // Update last edit
         storeRepository.save(store); // Update store
+
+        //Check if store belongs to other currently active shared users and push update over websocket
+        Set<String> activeUsers = activeUserManager.getActiveUsersExceptCurrentUser(jwtUtils.getUserFromJwtToken(token).getEmail());
+        for (String user:store.getSharedUsers()) {
+            if(activeUsers.contains(user)){
+                System.out.println("Active User match found: "+user);
+                simpMessagingTemplate.convertAndSendToUser(user, "/sync/store", store);
+            }
+        }
+
         return ResponseEntity.ok(new StoreResponse(store.getId(), store.getName(), store.getDescription(),
                 store.getLocation(), store.getCreated(), store.getLastEdit(), store.getImageId(),
                 store.getOwner(), store.getSharedUsers(), store.getItems(), store.getComments()));
@@ -560,13 +580,13 @@ public class AppController {
     //@PreAuthorize("hasRole('USER') or hasRole('MODERATOR') or hasRole('ADMIN')")
     public ResponseEntity<?> downloadImage(@PathVariable("id") String id,
                                            @PathVariable("token") String token) throws IOException {
-        if (token == null && token.equals("")) {
+        if (token == null || token.equals("")) {
             return ResponseEntity.badRequest().body("No token present!");
         }
         if (!jwtUtils.validateJwtToken(token)) {
             return ResponseEntity.badRequest().body("Token not valid!");
         }
-        if (id == null && id.equals("")) {
+        if (id == null || id.equals("")) {
             return ResponseEntity.badRequest().body("Wrong image parameters!");
         }
         GridFSDownloadStream gridFSDownloadStream = gridFSBucket.openDownloadStream(new ObjectId(id));

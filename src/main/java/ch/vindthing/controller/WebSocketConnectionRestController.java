@@ -21,16 +21,16 @@ public class WebSocketConnectionRestController {
     @PostMapping("/user-connect")
     public String userConnect(HttpServletRequest request, @ModelAttribute("username") String userName) {
         String remoteAddr = "";
-        System.out.println("User connected");
+        //System.out.println("User connected");
         if (request != null) {
             remoteAddr = request.getHeader("Remote_Addr");
-            System.out.println("not null: "+remoteAddr);
+            //System.out.println("not null: "+remoteAddr);
             if (StringUtils.isEmpty(remoteAddr)) {
                 remoteAddr = request.getHeader("X-FORWARDED-FOR");
-                System.out.println("Is empty: "+remoteAddr);
+                //System.out.println("Is empty: "+remoteAddr);
                 if (remoteAddr == null || "".equals(remoteAddr)) {
                     remoteAddr = request.getRemoteAddr();
-                    System.out.println("remaddr is null: "+remoteAddr);
+                    //System.out.println("remaddr is null: "+remoteAddr);
                 }
             }
         }

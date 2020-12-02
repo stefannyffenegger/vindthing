@@ -1,4 +1,4 @@
-package ch.vindthing.util;
+package ch.vindthing.model;
 
 import java.security.Principal;
 

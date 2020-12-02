@@ -14,9 +14,9 @@ public class WebSocketMessageBrokerConfig implements WebSocketMessageBrokerConfi
 
     @Override
     public void configureMessageBroker(MessageBrokerRegistry config) {
-        config.enableSimpleBroker("/topic", "/queue"); //Subscriber endpoint
+        config.enableSimpleBroker("/topic", "/queue", "/sync"); //Subscriber endpoint
         //config.setApplicationDestinationPrefixes("/app");
-        config.setUserDestinationPrefix("/user"); //User destination
+        config.setUserDestinationPrefix("/client"); //Prefix
     }
 
     @Override
