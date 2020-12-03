@@ -74,7 +74,7 @@ public class AppController {
      * @param store Store object
      * @param token JWT token
      */
-    private void syncStoreToSharedUsers(Store store, String token){
+    private void syncStoreUpdateToSharedUsers(Store store, String token){
         //Check if store belongs to other currently active shared users and push update over websocket
         Set<String> activeUsers = activeUserManager.getActiveUsersExceptCurrentUser(jwtUtils.getUserFromJwtToken(token).getEmail());
         for (String user:store.getSharedUsers()) {
@@ -125,7 +125,7 @@ public class AppController {
 
         storeRepository.save(store); // Update Store
 
-        syncStoreToSharedUsers(store, token);
+        syncStoreUpdateToSharedUsers(store, token);
 
         return ResponseEntity.status(HttpStatus.CREATED).body(new ItemResponse(item.getId(), item.getName(),
                 item.getDescription(), item.getQuantity(), item.getCreated(), item.getLastedit(), item.getImageId(),
@@ -186,7 +186,7 @@ public class AppController {
             item = mongoTemplate.findOne(findQuery, Store.class).getItems().get(0);
 
             store = mongoTemplate.findOne(query, Store.class);
-            syncStoreDeleteToSharedUsers(store, token);
+            syncStoreUpdateToSharedUsers(store, token);
 
             return ResponseEntity.ok(new ItemResponse(item.getId(), item.getName(), item.getDescription(),
                     item.getQuantity(), item.getCreated(), item.getLastedit(), item.getImageId(), item.isInStore(),
@@ -239,7 +239,7 @@ public class AppController {
         storeRepository.save(newStore); // Update Store
 
         // Sync new store
-        syncStoreToSharedUsers(store, token);
+        syncStoreUpdateToSharedUsers(store, token);
 
         // Delete Item
         Query deleteQuery = new Query();
@@ -252,7 +252,7 @@ public class AppController {
         mongoTemplate.updateFirst(deleteQuery, update, ch.vindthing.model.Store.class);
 
         store = mongoTemplate.findOne(query, ch.vindthing.model.Store.class);
-        syncStoreToSharedUsers(store, token);
+        syncStoreUpdateToSharedUsers(store, token);
 
         return ResponseEntity.ok(new ItemResponse(item.getId(), item.getName(), item.getDescription(),
                 item.getQuantity(), item.getCreated(), item.getLastedit(), item.getImageId(), item.isInStore(),
@@ -290,7 +290,7 @@ public class AppController {
         mongoTemplate.updateFirst(query, update, ch.vindthing.model.Store.class);
 
         store = mongoTemplate.findOne(query, Store.class);
-        syncStoreToSharedUsers(store, token);
+        syncStoreUpdateToSharedUsers(store, token);
 
         return ResponseEntity.ok(new MessageResponse("Item " + itemUpdateRequest.getId() + " successfully deleted!"));
     }
@@ -344,7 +344,7 @@ public class AppController {
         storeRepository.save(store); // Update store
 
         //Check if store belongs to other currently active shared users and push update over websocket
-        syncStoreToSharedUsers(store, token);
+        syncStoreUpdateToSharedUsers(store, token);
 
         return ResponseEntity.ok(new StoreResponse(store.getId(), store.getName(), store.getDescription(),
                 store.getLocation(), store.getCreated(), store.getLastEdit(), store.getImageId(),
@@ -369,8 +369,8 @@ public class AppController {
             return ResponseEntity.badRequest().body("Store Delete: Only owners can delete a Store!");
         }
         storeRepository.delete(store);
-        //todo ws push: sync/store/delete
-        // store ID
+
+        syncStoreDeleteToSharedUsers(store, token);
 
         return ResponseEntity.ok(new MessageResponse("Store deleted!"));
     }
@@ -430,7 +430,7 @@ public class AppController {
         store.setLastEdit(StringUtils.getCurrentTimeStamp()); // Update last edit
         storeRepository.save(store); // Update store
 
-        syncStoreToSharedUsers(store, token);
+        syncStoreUpdateToSharedUsers(store, token);
 
         return ResponseEntity.ok(new StoreResponse(store.getId(), store.getName(), store.getDescription(),
                 store.getLocation(), store.getCreated(), store.getLastEdit(), store.getImageId(),
@@ -464,7 +464,7 @@ public class AppController {
         store.setLastEdit(StringUtils.getCurrentTimeStamp()); // Update last edit
         storeRepository.save(store);
 
-        syncStoreToSharedUsers(store, token);
+        syncStoreUpdateToSharedUsers(store, token);
 
         return ResponseEntity.ok(new StoreResponse(store.getId(), store.getName(), store.getDescription(),
                 store.getLocation(), store.getCreated(), store.getLastEdit(), store.getImageId(),
@@ -495,7 +495,7 @@ public class AppController {
         store.setLastEdit(StringUtils.getCurrentTimeStamp()); // Update last edit
         storeRepository.save(store); // Update store
 
-        syncStoreToSharedUsers(store, token);
+        syncStoreUpdateToSharedUsers(store, token);
 
         return ResponseEntity.ok(new StoreResponse(store.getId(), store.getName(), store.getDescription(),
                 store.getLocation(), store.getCreated(), store.getLastEdit(), store.getImageId(),
@@ -534,7 +534,7 @@ public class AppController {
         mongoTemplate.updateFirst(query, update, Store.class);
 
         store = mongoTemplate.findOne(query, Store.class);
-        syncStoreToSharedUsers(store, token);
+        syncStoreUpdateToSharedUsers(store, token);
 
         return ResponseEntity.ok(new MessageResponse("Comment " + commentRemoveRequest.getId()
                 + " successfully deleted!"));
@@ -585,7 +585,7 @@ public class AppController {
                     mongoTemplate.updateFirst(query, update, Store.class);
 
                     store = mongoTemplate.findOne(query, Store.class);
-                    syncStoreToSharedUsers(store, token);
+                    syncStoreUpdateToSharedUsers(store, token);
 
                     return ResponseEntity.ok(new ImageResponse(imageId));
                 }catch (Exception e) {
@@ -607,7 +607,7 @@ public class AppController {
                 store.setImageId(imageId);
                 storeRepository.save(store);
 
-                syncStoreToSharedUsers(store, token);
+                syncStoreUpdateToSharedUsers(store, token);
 
                 return ResponseEntity.ok(new ImageResponse(imageId));
             case "profile":
