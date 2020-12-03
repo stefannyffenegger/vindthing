@@ -141,10 +141,11 @@ public class AppController {
     @PreAuthorize("hasRole('USER') or hasRole('MODERATOR') or hasRole('ADMIN')")
     public ResponseEntity<?> updateItem(@RequestHeader (name="Authorization") String token,
                                         @Valid @RequestBody() ItemUpdateRequest itemUpdateRequest) {
+        Store store;
         // Find Store by Item ID
         Query query = new Query(Criteria.where("items._id").is(itemUpdateRequest.getId()));
         try {
-            ch.vindthing.model.Store store = mongoTemplate.findOne(query, ch.vindthing.model.Store.class);
+            store = mongoTemplate.findOne(query, Store.class);
             // Usercheck
             if(!jwtUtils.checkPermissionSharedUsers(token, store)){
                 return ResponseEntity.badRequest().body("Item Update: No Permission for this Store!");
@@ -184,8 +185,8 @@ public class AppController {
             mongoTemplate.updateFirst(query, update, Store.class);
             item = mongoTemplate.findOne(findQuery, Store.class).getItems().get(0);
 
-            //TODO:
-            // syncUpdateToSharedUsers(store, token);
+            store = mongoTemplate.findOne(query, Store.class);
+            syncStoreDeleteToSharedUsers(store, token);
 
             return ResponseEntity.ok(new ItemResponse(item.getId(), item.getName(), item.getDescription(),
                     item.getQuantity(), item.getCreated(), item.getLastedit(), item.getImageId(), item.isInStore(),
