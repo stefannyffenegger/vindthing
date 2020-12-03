@@ -9,7 +9,6 @@ import ch.vindthing.payload.response.StoreResponse;
 import ch.vindthing.repository.StoreRepository;
 import ch.vindthing.repository.UserRepository;
 import ch.vindthing.security.jwt.JwtUtils;
-import ch.vindthing.model.ChatMessage;
 import ch.vindthing.util.StringUtils;
 import com.mongodb.client.gridfs.GridFSBucket;
 import com.mongodb.client.gridfs.GridFSDownloadStream;
@@ -35,7 +34,6 @@ import org.springframework.web.server.ResponseStatusException;
 import javax.validation.Valid;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
@@ -72,6 +70,38 @@ public class AppController {
     JwtUtils jwtUtils;
 
     /**
+     * Pushes updates to all currently active shared users of a store over websocket
+     * @param store Store object
+     * @param token JWT token
+     */
+    private void syncStoreToSharedUsers(Store store, String token){
+        //Check if store belongs to other currently active shared users and push update over websocket
+        Set<String> activeUsers = activeUserManager.getActiveUsersExceptCurrentUser(jwtUtils.getUserFromJwtToken(token).getEmail());
+        for (String user:store.getSharedUsers()) {
+            if(activeUsers.contains(user)){
+                System.out.println("Update Store, Active User match found: "+user);
+                simpMessagingTemplate.convertAndSendToUser(user, "/store/update", store);
+            }
+        }
+    }
+
+    /**
+     * Pushes updates to all currently active shared users of a store over websocket
+     * @param store Store object
+     * @param token JWT token
+     */
+    private void syncStoreDeleteToSharedUsers(Store store, String token){
+        //Check if store belongs to other currently active shared users and push update over websocket
+        Set<String> activeUsers = activeUserManager.getActiveUsersExceptCurrentUser(jwtUtils.getUserFromJwtToken(token).getEmail());
+        for (String user:store.getSharedUsers()) {
+            if(activeUsers.contains(user)){
+                System.out.println("Delete Store, Active User match found: "+user);
+                simpMessagingTemplate.convertAndSendToUser(user, "/store/delete", new MessageResponse(store.getId()));
+            }
+        }
+    }
+
+    /**
      * Add an Item to a Store
      * @param itemAddRequest Request, must contain storeId
      * @return Response with ID, Name, Description, Quantity
@@ -92,7 +122,11 @@ public class AppController {
 
         Item item = new Item(itemAddRequest.getName(), itemAddRequest.getDescription(), itemAddRequest.getQuantity());
         store.getItems().add(item);
+
         storeRepository.save(store); // Update Store
+
+        syncStoreToSharedUsers(store, token);
+
         return ResponseEntity.status(HttpStatus.CREATED).body(new ItemResponse(item.getId(), item.getName(),
                 item.getDescription(), item.getQuantity(), item.getCreated(), item.getLastedit(), item.getImageId(),
                 item.isInStore(), item.getUseCount(), item.getUseDates()));
@@ -149,6 +183,10 @@ public class AppController {
             }
             mongoTemplate.updateFirst(query, update, Store.class);
             item = mongoTemplate.findOne(findQuery, Store.class).getItems().get(0);
+
+            //TODO:
+            // syncUpdateToSharedUsers(store, token);
+
             return ResponseEntity.ok(new ItemResponse(item.getId(), item.getName(), item.getDescription(),
                     item.getQuantity(), item.getCreated(), item.getLastedit(), item.getImageId(), item.isInStore(),
                     item.getUseCount(), item.getUseDates()));
@@ -173,10 +211,10 @@ public class AppController {
         query.fields().include("items.$").include("sharedUsers");
 
         // Find Item and current Store
-        ch.vindthing.model.Store store;
+        Store store;
         Item item;
         try{
-            store = mongoTemplate.findOne(query, ch.vindthing.model.Store.class);
+            store = mongoTemplate.findOne(query, Store.class);
             // Usercheck current Store
             if(!jwtUtils.checkPermissionSharedUsers(token, store)){
                 return ResponseEntity.badRequest().body("Item Move: No Permission for this Store!");
@@ -188,7 +226,7 @@ public class AppController {
         }
 
         // Check if store exists
-        ch.vindthing.model.Store newStore = storeRepository.findById(itemMoveRequest.getStoreId()).
+        Store newStore = storeRepository.findById(itemMoveRequest.getStoreId()).
                 orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
                         "Item Move: Store ID not found: " + itemMoveRequest.getStoreId()));
         // Usercheck new Store
@@ -199,6 +237,9 @@ public class AppController {
         newStore.getItems().add(item);
         storeRepository.save(newStore); // Update Store
 
+        // Sync new store
+        syncStoreToSharedUsers(store, token);
+
         // Delete Item
         Query deleteQuery = new Query();
         deleteQuery.addCriteria(new Criteria().andOperator(
@@ -208,6 +249,9 @@ public class AppController {
 
         Update update = new Update().pull("items", item);
         mongoTemplate.updateFirst(deleteQuery, update, ch.vindthing.model.Store.class);
+
+        store = mongoTemplate.findOne(query, ch.vindthing.model.Store.class);
+        syncStoreToSharedUsers(store, token);
 
         return ResponseEntity.ok(new ItemResponse(item.getId(), item.getName(), item.getDescription(),
                 item.getQuantity(), item.getCreated(), item.getLastedit(), item.getImageId(), item.isInStore(),
@@ -230,7 +274,7 @@ public class AppController {
         ch.vindthing.model.Store store;
         Item item;
         try{
-            store = mongoTemplate.findOne(query, ch.vindthing.model.Store.class);
+            store = mongoTemplate.findOne(query, Store.class);
             // Usercheck
             if(!jwtUtils.checkPermissionSharedUsers(token, store)){
                 return ResponseEntity.badRequest().body("Item Delete: No Permission for this Store!");
@@ -240,10 +284,13 @@ public class AppController {
             return ResponseEntity.badRequest().body("Item Delete: Item ID not found: " + itemUpdateRequest.getId()
                     + " Exception: " + e);
         }
-
         // Delete Item
         Update update = new Update().pull("items", item);
         mongoTemplate.updateFirst(query, update, ch.vindthing.model.Store.class);
+
+        store = mongoTemplate.findOne(query, Store.class);
+        syncStoreToSharedUsers(store, token);
+
         return ResponseEntity.ok(new MessageResponse("Item " + itemUpdateRequest.getId() + " successfully deleted!"));
     }
 
@@ -296,13 +343,7 @@ public class AppController {
         storeRepository.save(store); // Update store
 
         //Check if store belongs to other currently active shared users and push update over websocket
-        Set<String> activeUsers = activeUserManager.getActiveUsersExceptCurrentUser(jwtUtils.getUserFromJwtToken(token).getEmail());
-        for (String user:store.getSharedUsers()) {
-            if(activeUsers.contains(user)){
-                System.out.println("Active User match found: "+user);
-                simpMessagingTemplate.convertAndSendToUser(user, "/sync/store", store);
-            }
-        }
+        syncStoreToSharedUsers(store, token);
 
         return ResponseEntity.ok(new StoreResponse(store.getId(), store.getName(), store.getDescription(),
                 store.getLocation(), store.getCreated(), store.getLastEdit(), store.getImageId(),
@@ -327,6 +368,9 @@ public class AppController {
             return ResponseEntity.badRequest().body("Store Delete: Only owners can delete a Store!");
         }
         storeRepository.delete(store);
+        //todo ws push: sync/store/delete
+        // store ID
+
         return ResponseEntity.ok(new MessageResponse("Store deleted!"));
     }
 
@@ -384,6 +428,9 @@ public class AppController {
         }
         store.setLastEdit(StringUtils.getCurrentTimeStamp()); // Update last edit
         storeRepository.save(store); // Update store
+
+        syncStoreToSharedUsers(store, token);
+
         return ResponseEntity.ok(new StoreResponse(store.getId(), store.getName(), store.getDescription(),
                 store.getLocation(), store.getCreated(), store.getLastEdit(), store.getImageId(),
                 store.getOwner(), store.getSharedUsers(), store.getItems(), store.getComments()));
@@ -415,6 +462,9 @@ public class AppController {
         }
         store.setLastEdit(StringUtils.getCurrentTimeStamp()); // Update last edit
         storeRepository.save(store);
+
+        syncStoreToSharedUsers(store, token);
+
         return ResponseEntity.ok(new StoreResponse(store.getId(), store.getName(), store.getDescription(),
                 store.getLocation(), store.getCreated(), store.getLastEdit(), store.getImageId(),
                 store.getOwner(), store.getSharedUsers(), store.getItems(), store.getComments()));
@@ -443,6 +493,9 @@ public class AppController {
         }
         store.setLastEdit(StringUtils.getCurrentTimeStamp()); // Update last edit
         storeRepository.save(store); // Update store
+
+        syncStoreToSharedUsers(store, token);
+
         return ResponseEntity.ok(new StoreResponse(store.getId(), store.getName(), store.getDescription(),
                 store.getLocation(), store.getCreated(), store.getLastEdit(), store.getImageId(),
                 store.getOwner(), store.getSharedUsers(), store.getItems(), store.getComments()));
@@ -478,6 +531,10 @@ public class AppController {
         // Delete Comment
         Update update = new Update().pull("comments", comment);
         mongoTemplate.updateFirst(query, update, Store.class);
+
+        store = mongoTemplate.findOne(query, Store.class);
+        syncStoreToSharedUsers(store, token);
+
         return ResponseEntity.ok(new MessageResponse("Comment " + commentRemoveRequest.getId()
                 + " successfully deleted!"));
     }
@@ -502,7 +559,7 @@ public class AppController {
                 query.fields().include("items.$").include("sharedUsers");
 
                 try{
-                    store = mongoTemplate.findOne(query, ch.vindthing.model.Store.class);
+                    store = mongoTemplate.findOne(query, Store.class);
                     // Usercheck
                     if(!jwtUtils.checkPermissionSharedUsers(token, store)){
                         return ResponseEntity.badRequest().body("Item Delete: No Permission for this Store!");
@@ -524,7 +581,10 @@ public class AppController {
                 }
 
                 try{
-                    mongoTemplate.updateFirst(query, update, ch.vindthing.model.Store.class);
+                    mongoTemplate.updateFirst(query, update, Store.class);
+
+                    store = mongoTemplate.findOne(query, Store.class);
+                    syncStoreToSharedUsers(store, token);
 
                     return ResponseEntity.ok(new ImageResponse(imageId));
                 }catch (Exception e) {
@@ -545,13 +605,15 @@ public class AppController {
 
                 store.setImageId(imageId);
                 storeRepository.save(store);
+
+                syncStoreToSharedUsers(store, token);
+
                 return ResponseEntity.ok(new ImageResponse(imageId));
             case "profile":
 
 
                 break;
         }
-        System.out.println(EResponse.Store.STORE_ADD);
         return ResponseEntity.badRequest().body("Wrong image parameters!");
     }
 
