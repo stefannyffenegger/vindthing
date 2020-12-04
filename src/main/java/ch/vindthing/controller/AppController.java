@@ -34,6 +34,7 @@ import org.springframework.web.server.ResponseStatusException;
 import javax.validation.Valid;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
@@ -95,7 +96,7 @@ public class AppController {
         Set<String> activeUsers = activeUserManager.getActiveUsersExceptCurrentUser(jwtUtils.getUserFromJwtToken(token).getEmail());
         for (String user:store.getSharedUsers()) {
             if(activeUsers.contains(user)){
-                System.out.println("Delete Store, Active User match found: "+user);
+                System.out.println("Delete Store, Active User match found: "+user+" "+store.getId());
                 simpMessagingTemplate.convertAndSendToUser(user, "/store/delete", new MessageResponse(store.getId()));
             }
         }
@@ -272,7 +273,7 @@ public class AppController {
         Query query = new Query(Criteria.where("items._id").is(itemUpdateRequest.getId()));
         query.fields().include("items.$").include("sharedUsers");
 
-        ch.vindthing.model.Store store;
+        Store store;
         Item item;
         try{
             store = mongoTemplate.findOne(query, Store.class);
@@ -289,8 +290,9 @@ public class AppController {
         Update update = new Update().pull("items", item);
         mongoTemplate.updateFirst(query, update, ch.vindthing.model.Store.class);
 
-        store = mongoTemplate.findOne(query, Store.class);
-        syncStoreUpdateToSharedUsers(store, token);
+        //TODO client/item/delete
+        //store = mongoTemplate.findOne(query, Store.class);
+        //syncStoreUpdateToSharedUsers(store, token);
 
         return ResponseEntity.ok(new MessageResponse("Item " + itemUpdateRequest.getId() + " successfully deleted!"));
     }
@@ -361,7 +363,7 @@ public class AppController {
     @PreAuthorize("hasRole('USER') or hasRole('MODERATOR') or hasRole('ADMIN')")
     public ResponseEntity<?> deleteStore(@Valid @RequestHeader (name="Authorization") String token,
                                          @RequestBody() StoreUpdateRequest storeUpdateRequest) {
-        ch.vindthing.model.Store store = storeRepository.findById(storeUpdateRequest.getId())
+        Store store = storeRepository.findById(storeUpdateRequest.getId())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
                         "Store Delete: Store ID not found: " + storeUpdateRequest.getId()));
         // Usercheck
@@ -517,6 +519,7 @@ public class AppController {
 
         Store store;
         Comment comment;
+        ArrayList<String> sharedUsers;
         try{
             store = mongoTemplate.findOne(query, Store.class);
             // Usercheck
@@ -533,7 +536,8 @@ public class AppController {
         Update update = new Update().pull("comments", comment);
         mongoTemplate.updateFirst(query, update, Store.class);
 
-        store = mongoTemplate.findOne(query, Store.class);
+        //TODO client/comment/delete
+        //store.getComments().remove(comment);
         syncStoreUpdateToSharedUsers(store, token);
 
         return ResponseEntity.ok(new MessageResponse("Comment " + commentRemoveRequest.getId()
