@@ -222,7 +222,11 @@ public class AppController {
             mongoTemplate.updateFirst(query, update, Store.class);
             item = mongoTemplate.findOne(findQuery, Store.class).getItems().get(0);
 
-            store = mongoTemplate.findOne(query, Store.class);
+            // Find updated Store
+            store = storeRepository.findById(store.getId()).
+                    orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                    "Item Update: Failed to find updated Store"));
+            // Sync to active shared users
             syncStoreUpdateToSharedUsers(store, token);
 
             return ResponseEntity.ok(new ItemResponse(item.getId(), item.getName(), item.getDescription(),
@@ -276,7 +280,7 @@ public class AppController {
         storeRepository.save(newStore); // Update Store
 
         // Sync new store
-        syncStoreUpdateToSharedUsers(store, token);
+        syncStoreUpdateToSharedUsers(newStore, token);
 
         // Delete Item
         Query deleteQuery = new Query();
@@ -288,7 +292,10 @@ public class AppController {
         Update update = new Update().pull("items", item);
         mongoTemplate.updateFirst(deleteQuery, update, ch.vindthing.model.Store.class);
 
-        store = mongoTemplate.findOne(query, ch.vindthing.model.Store.class);
+        // Find updated Store
+        store = storeRepository.findById(store.getId()).
+                orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                        "Item Move: Failed to find updated Store"));
         syncStoreUpdateToSharedUsers(store, token);
 
         return ResponseEntity.ok(new ItemResponse(item.getId(), item.getName(), item.getDescription(),
