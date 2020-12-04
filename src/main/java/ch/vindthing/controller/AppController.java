@@ -2,10 +2,7 @@ package ch.vindthing.controller;
 
 import ch.vindthing.model.*;
 import ch.vindthing.payload.request.*;
-import ch.vindthing.payload.response.ImageResponse;
-import ch.vindthing.payload.response.ItemResponse;
-import ch.vindthing.payload.response.MessageResponse;
-import ch.vindthing.payload.response.StoreResponse;
+import ch.vindthing.payload.response.*;
 import ch.vindthing.repository.StoreRepository;
 import ch.vindthing.repository.UserRepository;
 import ch.vindthing.security.jwt.JwtUtils;
@@ -71,15 +68,23 @@ public class AppController {
     JwtUtils jwtUtils;
 
     /**
+     * Get currently active users except current user from active user manager
+     * @param token
+     * @return
+     */
+    private Set<String> getActiveUsersFromJwtToken(String token){
+        return activeUserManager.getActiveUsersExceptCurrentUser(jwtUtils.getUserFromJwtToken(token).getEmail());
+    }
+
+    /**
      * Pushes updates to all currently active shared users of a store over websocket
      * @param store Store object
      * @param token JWT token
      */
     private void syncStoreUpdateToSharedUsers(Store store, String token){
         //Check if store belongs to other currently active shared users and push update over websocket
-        Set<String> activeUsers = activeUserManager.getActiveUsersExceptCurrentUser(jwtUtils.getUserFromJwtToken(token).getEmail());
         for (String user:store.getSharedUsers()) {
-            if(activeUsers.contains(user)){
+            if(getActiveUsersFromJwtToken(token).contains(user)){
                 System.out.println("Update Store, Active User match found: "+user);
                 simpMessagingTemplate.convertAndSendToUser(user, "/store/update", store);
             }
@@ -93,11 +98,26 @@ public class AppController {
      */
     private void syncStoreDeleteToSharedUsers(Store store, String token){
         //Check if store belongs to other currently active shared users and push update over websocket
-        Set<String> activeUsers = activeUserManager.getActiveUsersExceptCurrentUser(jwtUtils.getUserFromJwtToken(token).getEmail());
         for (String user:store.getSharedUsers()) {
-            if(activeUsers.contains(user)){
+            if(getActiveUsersFromJwtToken(token).contains(user)){
                 System.out.println("Delete Store, Active User match found: "+user+" "+store.getId());
                 simpMessagingTemplate.convertAndSendToUser(user, "/store/delete", new MessageResponse(store.getId()));
+            }
+        }
+    }
+
+    /**
+     * Pushes updates to all currently active shared users of a store over websocket
+     * @param store Store object
+     * @param token JWT token
+     */
+    private void syncCommentDeleteToSharedUsers(Store store, String commentId, String token){
+        //Check if store belongs to other currently active shared users and push update over websocket
+        for (String user:store.getSharedUsers()) {
+            if(getActiveUsersFromJwtToken(token).contains(user)){
+                System.out.println("Delete Comment, Active User match found: "+user+" "+store.getId()+" "+commentId);
+                simpMessagingTemplate.convertAndSendToUser(user, "/comment/delete",
+                        new RemoveResponse(commentId, store.getId()));
             }
         }
     }
@@ -538,7 +558,7 @@ public class AppController {
 
         //TODO client/comment/delete
         //store.getComments().remove(comment);
-        syncStoreUpdateToSharedUsers(store, token);
+        syncCommentDeleteToSharedUsers(store, commentRemoveRequest.getId(), token);
 
         return ResponseEntity.ok(new MessageResponse("Comment " + commentRemoveRequest.getId()
                 + " successfully deleted!"));
