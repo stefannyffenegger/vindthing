@@ -111,6 +111,22 @@ public class AppController {
      * @param store Store object
      * @param token JWT token
      */
+    private void syncItemDeleteToSharedUsers(Store store, String itemId, String token){
+        //Check if store belongs to other currently active shared users and push update over websocket
+        for (String user:store.getSharedUsers()) {
+            if(getActiveUsersFromJwtToken(token).contains(user)){
+                System.out.println("Delete Item, Active User match found: "+user+" "+store.getId());
+                simpMessagingTemplate.convertAndSendToUser(user, "/item/delete",
+                        new RemoveResponse(itemId, store.getId()));
+            }
+        }
+    }
+
+    /**
+     * Pushes updates to all currently active shared users of a store over websocket
+     * @param store Store object
+     * @param token JWT token
+     */
     private void syncCommentDeleteToSharedUsers(Store store, String commentId, String token){
         //Check if store belongs to other currently active shared users and push update over websocket
         for (String user:store.getSharedUsers()) {
@@ -312,7 +328,7 @@ public class AppController {
 
         //TODO client/item/delete
         //store = mongoTemplate.findOne(query, Store.class);
-        //syncStoreUpdateToSharedUsers(store, token);
+        syncItemDeleteToSharedUsers(store, itemUpdateRequest.getId(), token);
 
         return ResponseEntity.ok(new MessageResponse("Item " + itemUpdateRequest.getId() + " successfully deleted!"));
     }
