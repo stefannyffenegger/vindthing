@@ -1,8 +1,8 @@
 package ch.vindthing.controller;
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.util.*;
 import java.util.stream.Collectors;
 import javax.mail.internet.MimeMessage;
 import javax.validation.Valid;
@@ -147,14 +147,37 @@ public class AuthController {
 
         confirmationTokenRepository.save(confirmationToken);
 
+
+
+        String htmlMsg = "";
+
+        try {
+            File myObj = new File("src/main/resources/public/mail_template.html");
+            Scanner myReader = new Scanner(myObj);
+            while (myReader.hasNextLine()) {
+                htmlMsg += myReader.nextLine() + "\n";
+            }
+            myReader.close();
+        } catch (FileNotFoundException e) {
+            System.out.println("An error occurred.");
+            e.printStackTrace();
+        }
+
+        String confirmationLink = "http://localhost:8080/api/auth/profile/confirm-account?token=" + confirmationToken.getConfirmationToken();
+
+        htmlMsg = htmlMsg.replaceAll("PLACEHOLDER_FOR_LINK", confirmationLink);
+        System.out.println(htmlMsg);
+
         try {
 
             MimeMessage message = emailSenderService.createMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, false, "utf-8");
-            String htmlMsg = "<body style='border:2px solid black'>"
+
+            /*String htmlMsg = "<body style='border:2px solid black'>"
                     +"<a href=http://localhost:8080/api/auth/profile/confirm-account?token="
                     + confirmationToken.getConfirmationToken()
-                    +">Click here to validate your account<a></body>";
+                    +">Click here to validate your account<a></body>";*/
+
             message.setContent(htmlMsg, "text/html");
             helper.setTo(user.getEmail());
             helper.setSubject("Complete Registration!");
