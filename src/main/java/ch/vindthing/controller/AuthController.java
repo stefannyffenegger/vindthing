@@ -161,7 +161,7 @@ public class AuthController {
 
         // Backend: "http://localhost:8080/api/auth/profile/confirm-account?token="
 
-        String confirmationLink = "http://localhost:8080/api/auth/profile/confirm-account?token=" + confirmationToken.getConfirmationToken();
+        String confirmationLink = "http://localhost:3000/confirmation?id=" + confirmationToken.getConfirmationToken();
 
         htmlMsg = htmlMsg.replaceAll("PLACEHOLDER_FOR_LINK", confirmationLink);
         System.out.println(htmlMsg);
