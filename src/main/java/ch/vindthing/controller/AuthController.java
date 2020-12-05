@@ -143,14 +143,11 @@ public class AuthController {
         user.setRoles(roles);
         userRepository.save(user);
 
+        // Confirmation Mail
         ConfirmationToken confirmationToken = new ConfirmationToken(user);
-
         confirmationTokenRepository.save(confirmationToken);
 
-
-
         String htmlMsg = "";
-
         try {
             File myObj = new File("src/main/resources/public/mail_template.html");
             Scanner myReader = new Scanner(myObj);
@@ -159,9 +156,10 @@ public class AuthController {
             }
             myReader.close();
         } catch (FileNotFoundException e) {
-            System.out.println("An error occurred.");
             e.printStackTrace();
         }
+
+        // Backend: "http://localhost:8080/api/auth/profile/confirm-account?token="
 
         String confirmationLink = "http://localhost:8080/api/auth/profile/confirm-account?token=" + confirmationToken.getConfirmationToken();
 
@@ -169,21 +167,13 @@ public class AuthController {
         System.out.println(htmlMsg);
 
         try {
-
             MimeMessage message = emailSenderService.createMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, false, "utf-8");
-
-            /*String htmlMsg = "<body style='border:2px solid black'>"
-                    +"<a href=http://localhost:8080/api/auth/profile/confirm-account?token="
-                    + confirmationToken.getConfirmationToken()
-                    +">Click here to validate your account<a></body>";*/
-
             message.setContent(htmlMsg, "text/html");
             helper.setTo(user.getEmail());
-            helper.setSubject("Complete Registration!");
+            helper.setSubject("VindThing, Complete Registration!");
 
             emailSenderService.sendEmail(message);
-
         }catch (javax.mail.MessagingException e){
             return ResponseEntity.badRequest().body("Error");
         }
