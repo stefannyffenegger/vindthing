@@ -164,7 +164,6 @@ public class AuthController {
         String confirmationLink = "http://localhost:3000/confirmation?id=" + confirmationToken.getConfirmationToken();
 
         htmlMsg = htmlMsg.replaceAll("PLACEHOLDER_FOR_LINK", confirmationLink);
-        System.out.println(htmlMsg);
 
         try {
             MimeMessage message = emailSenderService.createMessage();
