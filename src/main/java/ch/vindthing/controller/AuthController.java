@@ -2,6 +2,8 @@ package ch.vindthing.controller;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.*;
 import java.util.stream.Collectors;
 import javax.mail.internet.MimeMessage;
@@ -16,6 +18,8 @@ import ch.vindthing.security.jwt.JwtUtils;
 import ch.vindthing.service.EmailSenderService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.ClassPathResource;
+import org.springframework.core.io.Resource;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.mail.javamail.MimeMessageHelper;
@@ -149,13 +153,17 @@ public class AuthController {
 
         String htmlMsg = "";
         try {
-            File myObj = new File("src/main/resources/public/mail_template.html");
-            Scanner myReader = new Scanner(myObj);
+            // File myObj = new File("src/main/resources/public/mail_template.html");
+
+            Resource resource = new ClassPathResource("public/mail_template.html");
+            Scanner myReader = new Scanner(resource.getInputStream());
             while (myReader.hasNextLine()) {
                 htmlMsg += myReader.nextLine() + "\n";
             }
             myReader.close();
         } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
             e.printStackTrace();
         }
 
