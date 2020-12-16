@@ -16,17 +16,19 @@ public class Store {
     private String id;
 
     @NotBlank
-    @Size(max = 20)
+    @Size(max = 50)
     private String name;
 
     @Size(max = 250)
     private String description;
 
+    @Size(max = 50)
     private String location;
 
     private ArrayList<Item> items = new ArrayList<>();
 
     @NotBlank
+    @Size(max = 50)
     private String owner;
 
     private ArrayList<String> sharedUsers = new ArrayList<>();

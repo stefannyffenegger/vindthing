@@ -17,7 +17,7 @@ public class User {
   private String id;
 
   @NotBlank
-  @Size(max = 20)
+  @Size(max = 50)
   private String name;
 
   @NotBlank
@@ -28,7 +28,7 @@ public class User {
   private String imageId;
 
   @NotBlank
-  @Size(max = 120)
+  @Size(max = 64)
   private String password;
 
   @DBRef

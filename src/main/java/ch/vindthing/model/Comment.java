@@ -16,6 +16,7 @@ public class Comment {
     @Id
     private String id;
 
+    @Size(max = 50)
     private String user;
 
     private String created;

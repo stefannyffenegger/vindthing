@@ -13,7 +13,7 @@ public class Item {
     @Id
     private String id;
 
-    @Size(max = 20)
+    @Size(max = 50)
     private String name;
 
     @Size(max = 250)

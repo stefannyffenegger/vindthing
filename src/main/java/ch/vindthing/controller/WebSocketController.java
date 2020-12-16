@@ -36,15 +36,12 @@ public class WebSocketController implements ActiveUserChangeListener {
         activeUserManager.removeListener(this);
     }
 
-    //@GetMapping("/webchat")
-    //public String getWebSocketWithSockJs() {return "webchat";}
-
     @MessageMapping("/ws/chat")
     public void send(SimpMessageHeaderAccessor sha, @Payload ChatMessage chatMessage) throws Exception {
         String sender = Objects.requireNonNull(sha.getUser()).getName();
         ChatMessage message = new ChatMessage(chatMessage.getFrom(), chatMessage.getText(), chatMessage.getRecipient());
 
-        //Needed to show own conversation in chat!
+        // To show own conversation in chat
         if (!sender.equals(chatMessage.getRecipient())) {
             simpMessagingTemplate.convertAndSendToUser(sender, "/queue/messages", message);
         }
