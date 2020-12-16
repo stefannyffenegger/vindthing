@@ -8,6 +8,8 @@ import java.util.UUID;
 import lombok.Getter;
 import lombok.Setter;
 
+import javax.validation.constraints.Size;
+
 @Getter
 @Setter
 @Document(collection = "confirmationToken")
@@ -19,6 +21,7 @@ public class ConfirmationToken {
 
   private Date createdDate;
 
+  @Size(max = 50)
   private User user;
 
   public ConfirmationToken() {
