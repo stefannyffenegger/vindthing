@@ -13,6 +13,11 @@ public class MongoConfig {
     @Value("${spring.data.mongodb.database}")
     String db;
 
+    /**
+     * Gets the GridFSBucket
+     * @param mongoClient Existing mongodb client
+     * @return GridFS Bucket
+     */
     @Bean
     public GridFSBucket getGridFSBucket(MongoClient mongoClient){
         MongoDatabase database = mongoClient.getDatabase(db);

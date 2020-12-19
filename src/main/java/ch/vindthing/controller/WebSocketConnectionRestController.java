@@ -18,6 +18,12 @@ public class WebSocketConnectionRestController {
     @Autowired
     private ActiveUserManager activeSessionManager;
 
+    /**
+     * Endpoint to add a new user to the active users
+     * @param request http request
+     * @param userName email
+     * @return
+     */
     @PostMapping("/user-connect")
     public String userConnect(HttpServletRequest request, @ModelAttribute("username") String userName) {
         String remoteAddr = "";
@@ -39,12 +45,22 @@ public class WebSocketConnectionRestController {
         return remoteAddr;
     }
 
+    /**
+     * Disconnect an active user
+     * @param userName email
+     * @return http response
+     */
     @PostMapping("/user-disconnect")
     public String userDisconnect(@ModelAttribute("username") String userName) {
         activeSessionManager.remove(userName);
         return "disconnected";
     }
 
+    /**
+     * Gets all active users except for the current user
+     * @param username email
+     * @return http response
+     */
     @GetMapping("/active-users-except/{username}")
     public Set<String> getActiveUsersExceptCurrentUser(@PathVariable String username) {
         return activeSessionManager.getActiveUsersExceptCurrentUser(username);

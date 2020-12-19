@@ -15,7 +15,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.CrossOrigin;
 
 /**
- * Handles all messages
+ * Handles all stomp messages
  */
 @CrossOrigin(origins = "*", maxAge = 3600)
 @Controller

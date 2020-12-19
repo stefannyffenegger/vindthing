@@ -5,7 +5,7 @@ package ch.vindthing.controller;
  */
 public interface ActiveUserChangeListener {
     /**
-     * Call when Observable's internal state is changed.
+     * Call when Observable's internal state is changed
      */
     void notifyActiveUserChange();
 }
