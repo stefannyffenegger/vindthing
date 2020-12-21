@@ -9,6 +9,9 @@ import org.springframework.data.mongodb.core.mapping.Document;
 
 import javax.validation.constraints.Size;
 
+/**
+ * Comment Object
+ */
 @Getter
 @Setter
 @Document

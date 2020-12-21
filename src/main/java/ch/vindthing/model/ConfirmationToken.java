@@ -10,6 +10,9 @@ import lombok.Setter;
 
 import javax.validation.constraints.Size;
 
+/**
+ * ConfirmationToken Object
+ */
 @Getter
 @Setter
 @Document(collection = "confirmationToken")

@@ -8,6 +8,9 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+/**
+ * MongoDB configuration
+ */
 @Configuration
 public class MongoConfig {
     @Value("${spring.data.mongodb.database}")

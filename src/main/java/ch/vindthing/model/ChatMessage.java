@@ -2,6 +2,9 @@ package ch.vindthing.model;
 
 import ch.vindthing.util.StringUtils;
 
+/**
+ * ChatMessage Object
+ */
 public class ChatMessage {
 
     private String from;

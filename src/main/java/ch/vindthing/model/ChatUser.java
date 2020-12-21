@@ -2,6 +2,9 @@ package ch.vindthing.model;
 
 import java.security.Principal;
 
+/**
+ * ChatUser Object
+ */
 public class ChatUser implements Principal {
 
     String name;
