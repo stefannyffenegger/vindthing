@@ -20,10 +20,11 @@ public class ItemAddRequest {
      * @param description Optional
      * @param quantity Optional
      */
-    public ItemAddRequest(String name, String description, int quantity) {
+    public ItemAddRequest(String name, String description, int quantity, String storeId) {
         this.name = name;
         this.description = description;
         this.quantity = quantity;
+        this.storeId = storeId;
     }
 }
 

@@ -15,7 +15,7 @@ public class StoreResponse {
     private String name;
     private String description;
     private String location;
-    private String lastedit;
+    private String lastEdit;
     private String imageId;
     private String owner;
     private ArrayList<String> sharedUsers;
@@ -30,7 +30,7 @@ public class StoreResponse {
         this.description = description;
         this.location = location;
         this.created = created;
-        this.lastedit = lastedit;
+        this.lastEdit = lastedit;
         this.owner = owner;
         this.sharedUsers = sharedUsers;
         this.items = items;
