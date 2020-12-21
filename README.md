@@ -11,7 +11,7 @@ Finds your things!
 [
    { "name": "ROLE_USER" },
    { "name": "ROLE_MODERATOR" },
-   { "name": "ROLE_ADMIN" },
+   { "name": "ROLE_ADMIN" }
 ]
 ```
 
