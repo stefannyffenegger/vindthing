@@ -25,7 +25,7 @@ public class Item {
 
     private String created;
 
-    private String lastedit;
+    private String lastEdit;
 
     private boolean inStore;
 
@@ -47,7 +47,7 @@ public class Item {
         this.description = description;
         this.quantity = quantity;
         this.created = StringUtils.getCurrentTimeStamp();
-        this.lastedit = StringUtils.getCurrentTimeStamp();
+        this.lastEdit = StringUtils.getCurrentTimeStamp();
         this.inStore = true;
     }
 
@@ -95,12 +95,12 @@ public class Item {
         return created;
     }
 
-    public String getLastedit() {
-        return lastedit;
+    public String getLastEdit() {
+        return lastEdit;
     }
 
-    public void setLastedit(String lastedit) {
-        this.lastedit = lastedit;
+    public void setLastEdit(String lastEdit) {
+        this.lastEdit = lastEdit;
     }
 
     public boolean isInStore() {

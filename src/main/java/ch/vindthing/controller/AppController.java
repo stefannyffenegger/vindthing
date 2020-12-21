@@ -164,7 +164,7 @@ public class AppController {
         syncStoreUpdateToSharedUsers(store, token);
 
         return ResponseEntity.status(HttpStatus.CREATED).body(new ItemResponse(item.getId(), item.getName(),
-                item.getDescription(), item.getQuantity(), item.getCreated(), item.getLastedit(), item.getImageId(),
+                item.getDescription(), item.getQuantity(), item.getCreated(), item.getLastEdit(), item.getImageId(),
                 item.isInStore(), item.getUseCount(), item.getUseDates()));
     }
 
@@ -229,7 +229,7 @@ public class AppController {
             syncStoreUpdateToSharedUsers(store, token);
 
             return ResponseEntity.ok(new ItemResponse(item.getId(), item.getName(), item.getDescription(),
-                    item.getQuantity(), item.getCreated(), item.getLastedit(), item.getImageId(), item.isInStore(),
+                    item.getQuantity(), item.getCreated(), item.getLastEdit(), item.getImageId(), item.isInStore(),
                     item.getUseCount(), item.getUseDates()));
         }catch (Exception e) {
             return ResponseEntity.badRequest().body("Item Update Failed for ID: " + itemUpdateRequest.getId()
@@ -298,7 +298,7 @@ public class AppController {
         syncStoreUpdateToSharedUsers(store, token);
 
         return ResponseEntity.ok(new ItemResponse(item.getId(), item.getName(), item.getDescription(),
-                item.getQuantity(), item.getCreated(), item.getLastedit(), item.getImageId(), item.isInStore(),
+                item.getQuantity(), item.getCreated(), item.getLastEdit(), item.getImageId(), item.isInStore(),
                 item.getUseCount(), item.getUseDates()));
     }
 
