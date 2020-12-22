@@ -1,9 +1,7 @@
 package ch.vindthing.controller;
 
-import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.*;
 import java.util.stream.Collectors;
 import javax.mail.internet.MimeMessage;
@@ -70,7 +68,8 @@ public class AuthController {
     @Autowired
     private EmailSenderService emailSenderService;
 
-
+    @Value("${vindthing.app.frontendurl}")
+    private String frontendurl;
 
     /**
      * Signin/Login user
@@ -169,7 +168,7 @@ public class AuthController {
 
         // Backend: "http://localhost:8080/api/auth/profile/confirm-account?token="
 
-        String confirmationLink = "http://localhost:3000/confirmation?id=" + confirmationToken.getConfirmationToken();
+        String confirmationLink = frontendurl + "/confirmation?id=" + confirmationToken.getConfirmationToken();
 
         htmlMsg = htmlMsg.replaceAll("PLACEHOLDER_FOR_LINK", confirmationLink);
 
